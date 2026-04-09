@@ -12,3 +12,8 @@
 /data
 .DS_Store
 frontend/.hive
+
+
+# Fichiers locaux d'IDE et de système
+*.iml
+*.lnk
