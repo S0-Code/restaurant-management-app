@@ -21,3 +21,24 @@ ALTER table restaurants add constraint slot_duration_accepted check
     ( slot_duration in (10 , 15 , 20 , 30 , 60));
 
 
+
+
+/*Le nom doit avoir au minimum une longueur de 5 caractères.*/
+
+ALTER TABLE restaurants add constraint restaurant_name_min_length check
+    (  length(trim(name)) >= 5  );
+
+
+
+/*L'adresse doit avoir au minimum une longueur de 5 caractères.*/
+ALTER TABLE restaurants add constraint restaurant_address_min_length check
+    (  length(trim(address)) >= 5 );
+
+/*La ville doit avoir au minimum une longueur de 3 caractères.*/
+ALTER TABLE restaurants add constraint restaurant_city_min_length check
+    (  length(trim(city)) >= 3 );
+
+/*Le numéro de téléphone doit avoir un format de numéro belge valide,
+  et peut être encodé avec ou sans espaces de séparation entre les groupes de chiffres.*/
+ALTER TABLE restaurants add constraint restaurant_phone_number_format check
+    ( replace(phone, ' ', '') ~ '^\+32[1-9]\d{7,8}$' )
