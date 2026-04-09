@@ -22,5 +22,5 @@ alter table users add constraint check_password_format
 
 
 /*On ne peut pas modifier le rôle d'un utilisateur.*/
-        Va être fait dans Can_not_change_this
+        Va être fait dans check_immutable_columns.sql
      */
