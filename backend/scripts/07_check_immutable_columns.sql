@@ -36,7 +36,7 @@ drop trigger if exists trg_prevent_role_update on users;
 create trigger trg_prevent_role_update
     before update on users
     for each row
-    execute procedure prevent_column_update('role');
+    execute function prevent_column_update('role');
 
 
 /*On ne peut pas modifier le restaurant d'une table. */
@@ -45,4 +45,4 @@ drop  trigger if exists trg_prevent_restaurant_update on tables;
 create trigger trg_prevent_restaurant_update
     before update on tables
     for each row
-    execute procedure prevent_column_update('restaurant');
+    execute function prevent_column_update('restaurant');

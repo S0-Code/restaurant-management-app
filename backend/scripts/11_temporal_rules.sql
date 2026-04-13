@@ -30,4 +30,4 @@ drop trigger if exists trg_reservation_status_transition on reservations;
 create trigger trg_reservation_status_transition
     before update on reservations
     for each row
-    execute procedure check_reservation_status_transition();
+    execute function check_reservation_status_transition();
