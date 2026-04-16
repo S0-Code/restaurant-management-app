@@ -74,3 +74,159 @@ do $test$
     end
 $test$;
 rollback;
+
+
+/* On ne peut pas modifier le restaurant d'un service. */
+
+begin;
+do
+$test$
+    declare
+        service_id bigint;
+        restaurant_id_1 bigint;
+    begin
+        raise notice 'TEST: restaurant inchangé correct (update)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto test 1', 'Rue du Test 1', 'Bruxelles', '0470000001', 30)
+        returning id into restaurant_id_1;
+
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id_1, 1, '12:00:00', '17:00:00')
+        returning id into service_id;
+
+        update services
+        set day_of_week = 3
+        where id = service_id;
+
+    end;
+$test$;
+rollback;
+
+
+begin;
+do
+$test$
+    declare
+        service_id bigint;
+        restaurant_id_1 bigint;
+        restaurant_id_2 bigint;
+    begin
+        raise notice 'TEST: restaurant modifié incorrect (update)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto test 3', 'Rue du Test 3', 'Bruxelles', '0470000003', 30)
+        returning id into restaurant_id_1;
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto test 4', 'Rue du Test 4', 'Bruxelles', '0470000004', 30)
+        returning id into restaurant_id_2;
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id_1, 4, '13:00:00', '20:00:00')
+        returning id into service_id;
+
+        perform should_fail($$
+        update services
+        set restaurant = $$ || restaurant_id_2 || $$
+        where id = $$ || service_id ||
+            $$$$, 'restrict_violation');
+
+end;
+$test$;
+rollback;
+
+
+/* L'heure de fin doit être postérieure à l'heure de début d'au moins une heure.
+   Note : l'heure de fin d'un service représente l'heure au-delà de laquelle le restaurant
+   n'accepte plus de clients.*/
+
+begin;
+do $test$
+    DECLARE
+        restaurant_id bigint;
+    begin
+        raise notice 'TEST: End time >= Start_time + 1h correct (Insert)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        VALUES ('Test end time après start time', 'xxxxxxxxxxx', 'BXL', '+32 459 63 56 99', 30)
+        returning id into restaurant_id;
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        VALUES (restaurant_id, 6, '11:00:00', '12:00:00' );
+    end;
+$test$;
+rollback;
+
+begin;
+do $test$
+    DECLARE
+        restaurant_id bigint;
+    begin
+        raise notice 'TEST: End time >= Start_time + 1h Incorrect (Insert)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        VALUES ('Test end time après start time', 'xxxxxxxxxxx', 'BXL', '+32 459 63 56 99', 30)
+        returning id into restaurant_id;
+
+        perform should_fail($$
+                insert into services (restaurant, day_of_week, start_time, end_time)
+                VALUES ($$ || restaurant_id || $$, 6, '11:00:00', '11:59:59' )
+            $$, 'check_violation')
+        ;
+    end;
+$test$;
+rollback;
+
+begin;
+do $test$
+    declare
+        restaurant_id bigint;
+        service_id bigint;
+    begin
+        raise notice 'TEST: End time >= Start_time + 1h correct (Update)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Test end time après start time', 'xxxxxxxxxxx', 'BXL', '+32 459 63 56 99', 30)
+        returning id into restaurant_id;
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 6, '11:00:00', '12:00:00')
+        returning id into service_id;
+
+        update services
+        set end_time = '12:30:00'
+        where id = service_id;
+    end;
+$test$;
+rollback;
+
+
+begin;
+do $test$
+    declare
+        restaurant_id bigint;
+        service_id bigint;
+    begin
+        raise notice 'TEST: End time >= Start_time + 1h incorrect (Update)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Test end time après start time', 'xxxxxxxxxxx', 'BXL', '+32 459 63 56 99', 30)
+        returning id into restaurant_id;
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 6, '11:00:00', '12:00:00')
+        returning id into service_id;
+
+        perform should_fail(
+                format($sql$
+                update services
+                set end_time = '11:30:00'
+                where id = %s
+            $sql$, service_id),
+                'check_violation'
+                );
+    end;
+$test$;
+rollback;
