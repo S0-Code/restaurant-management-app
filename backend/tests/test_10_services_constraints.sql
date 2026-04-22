@@ -18,7 +18,7 @@ do $test$
 
         -- On prépare un restaurant cobaye
         insert into restaurants (id, name, address, city, phone)
-        values (999, 'Test Resto', 'Rue du Test', 'Bruxelles', '0470112233');
+        values (999, 'Test Resto', 'Rue du Test', 'Bruxelles', '+32 485 65 69 12');
 
         -- On insère un service valide (Jour 4)
         insert into services (id, restaurant, day_of_week, start_time, end_time)
@@ -51,7 +51,7 @@ do $test$
         raise notice 'TEST: Insertion jour invalide (8) - doit échouer';
 
         insert into restaurants (id, name, address, city, phone)
-        values (999, 'Test Resto', 'Rue du Test', 'Bruxelles', '0470112233');
+        values (999, 'Test Resto', 'Rue du Test', 'Bruxelles', '+32 485 65 69 12');
 
         perform should_fail($$
             insert into services (id, restaurant, day_of_week, start_time, end_time)
@@ -88,7 +88,7 @@ $test$
         raise notice 'TEST: restaurant inchangé correct (update)';
 
         insert into restaurants (name, address, city, phone, slot_duration)
-        values ('Resto test 1', 'Rue du Test 1', 'Bruxelles', '0470000001', 30)
+        values ('Resto test 1', 'Rue du Test 1', 'Bruxelles', '+32 485 65 69 12', 30)
         returning id into restaurant_id_1;
 
 
@@ -116,11 +116,11 @@ $test$
         raise notice 'TEST: restaurant modifié incorrect (update)';
 
         insert into restaurants (name, address, city, phone, slot_duration)
-        values ('Resto test 3', 'Rue du Test 3', 'Bruxelles', '0470000003', 30)
+        values ('Resto test 3', 'Rue du Test 3', 'Bruxelles', '+32 485 65 69 12', 30)
         returning id into restaurant_id_1;
 
         insert into restaurants (name, address, city, phone, slot_duration)
-        values ('Resto test 4', 'Rue du Test 4', 'Bruxelles', '0470000004', 30)
+        values ('Resto test 4', 'Rue du Test 4', 'Bruxelles', '+32 485 65 69 12', 30)
         returning id into restaurant_id_2;
 
         insert into services (restaurant, day_of_week, start_time, end_time)
