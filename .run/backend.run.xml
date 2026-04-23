@@ -11,6 +11,7 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/10_services_constraints.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/11_temporal_rules.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_01_reservation_user_role.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/BR_02_guests_number.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_06_table_overlap.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_09_reservation_lifecycle.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_11_reservation_final_status.sql" />

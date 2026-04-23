@@ -4,6 +4,17 @@
     <script-file value="$PROJECT_DIR$/backend/tests/test_02_impersonation.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_03_reset_database.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_04.00_br_email_unique.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_05_user_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_06_restaurants_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_07_check_immutable_columns.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_08_reservations_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_09_tables_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_10_services_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_11_temporal_rules.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_01_reservation_user_role.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_09_reservation_lifecycle.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_11_reservation_final_status.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_06_table_overlap.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
     <method v="2">
