@@ -17,8 +17,6 @@
     <script-file value="$PROJECT_DIR$/backend/tests/test_BR_06_table_overlap.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
-    <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="backend" run_configuration_type="DatabaseScript" />
-    </method>
+    <method v="2" />
   </configuration>
 </component>

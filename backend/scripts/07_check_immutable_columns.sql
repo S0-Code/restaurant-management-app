@@ -18,8 +18,7 @@ begin
 
     -- On compare
     if ancienne_valeur is distinct from nouvelle_valeur then
-        raise exception 'La modification de la colonne "%" est interdite.', nom_colonne
-        using errcode = 'restrict_violation';
+        raise exception 'La modification de la colonne "%" est interdite.', nom_colonne;
 end if;
 
 return NEW;

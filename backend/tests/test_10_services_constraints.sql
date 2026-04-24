@@ -127,11 +127,12 @@ $test$
         values (restaurant_id_1, 4, '13:00:00', '20:00:00')
         returning id into service_id;
 
-        perform should_fail($$
-        update services
-        set restaurant = $$ || restaurant_id_2 || $$
-        where id = $$ || service_id ||
-            $$$$, 'restrict_violation');
+        perform should_fail(
+                'update services
+                 set restaurant = ' || restaurant_id_2 || '
+     where id = ' || service_id,
+                'raise_exception'
+                );
 
 end;
 $test$;

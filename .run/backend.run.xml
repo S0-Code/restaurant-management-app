@@ -14,8 +14,9 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_02_guests_number.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_03_reservations_tables.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_09_reservation_lifecycle.sql" />
-    <script-file value="$PROJECT_DIR$/backend/scripts/BR_11_reservation_final_status.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/BR_04_reservation_time.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_06_table_overlap.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/BR_11_reservation_final_status.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
     <method v="2" />
