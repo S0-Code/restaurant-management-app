@@ -56,7 +56,7 @@ values (restaurant_id, 7, '18:00:00', '23:00:00');
 perform should_fail($$
             insert into reservations (client, restaurant, number_of_guests, datetime)
             values ($$ || client_id || $$, $$ || restaurant_id || $$, 2, '2026-11-15 15:00:00.000000')
-        $$, 'P0001');
+        $$, 'raise_exception');
 end;
 $test$;
 rollback;
