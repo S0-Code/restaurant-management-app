@@ -249,13 +249,14 @@ begin
         when others then
             if SQLSTATE = get_sqlstate(errname) then
                 -- Exception attendue, OK
-                null;
+                raise notice 'Expected exception raised: % - %', SQLSTATE, SQLERRM;
             else
-                raise exception using errcode = SQLSTATE, message = 'Unexpected error code: ' || SQLSTATE;
+                raise exception using errcode = SQLSTATE, message = format('Unexpected error code: %s - %s', SQLSTATE, SQLERRM);
             end if;
     end;
 end;
 $$ language plpgsql;
+
 
 /*
 Helper de tests qui convertit un nom d'erreur PostgreSQL (par exemple
