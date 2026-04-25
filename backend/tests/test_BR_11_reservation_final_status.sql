@@ -17,7 +17,7 @@ do $test$
 
         -- 1. On crée une réservation cobaye en 'pending' (Respect de la BR-09)
         insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-        values (999, 3, 1, current_timestamp + interval '2 days', 2, 'pending');
+        values (999, 3, 1, get_current_time() + interval '2 days', 2, 'pending');
 
         -- 2. On modifie le nombre d'invités (ça doit passer)
         update reservations set number_of_guests = 4 where id = 999;
@@ -37,7 +37,7 @@ do $test$
 
         -- 1. On crée le cobaye proprement en 'pending' (Respect de la BR-09)
         insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-        values (888, 3, 1, current_timestamp - interval '2 days', 2, 'pending');
+        values (888, 3, 1, get_current_time() - interval '2 days', 2, 'pending');
 
         -- 2. On suit le cycle de vie pour arriver à 'completed'
         update reservations set status = 'confirmed' where id = 888;
@@ -59,14 +59,14 @@ do $test$
 
         -- 1. On crée le cobaye proprement en 'pending' (Respect de la BR-09)
         insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-        values (777, 3, 1, current_timestamp + interval '2 days', 2, 'pending');
+        values (777, 3, 1, get_current_time() + interval '2 days', 2, 'pending');
 
         -- 2. On l'annule en suivant le cycle de vie
         update reservations set status = 'cancelled' where id = 777;
 
         -- 3. On tente de modifier la date sur l'ID 777 (bloqué par BR-11)
         perform should_fail($$
-            update reservations set datetime = current_timestamp + interval '5 days' where id = 777;
+            update reservations set datetime = get_current_time() + interval '5 days' where id = 777;
         $$, 'restrict_violation');
     end
 $test$;
