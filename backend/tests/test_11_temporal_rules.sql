@@ -18,7 +18,7 @@ do $test$
 
         -- 1. TEST INSERT : On crée une réservation cobaye DANS LE FUTUR (dans 10 jours)
         insert into reservations (id, client, restaurant, number_of_guests, status, datetime)
-        values (999, 3, 1, 2, 'confirmed', current_timestamp + interval '10 days');
+        values (999, 3, 1, 2, 'confirmed', get_current_time() + interval '10 days');
 
         -- 2. TEST UPDATE : On met à jour ce cobaye vers pending
         update reservations set status = 'pending' where id = 999;
@@ -37,7 +37,7 @@ do $test$
 
         -- 1. Préparation (INSERT) : On crée un cobaye DANS LE PASSÉ
         insert into reservations (id, client, restaurant, number_of_guests, status, datetime)
-        values (888, 3, 1, 2, 'confirmed', current_timestamp - interval '1 day');
+        values (888, 3, 1, 2, 'confirmed', get_current_time() - interval '1 day');
 
         -- 2. TEST UPDATE Négatif : On tente de repasser ce cobaye en pending
         perform should_fail($$
