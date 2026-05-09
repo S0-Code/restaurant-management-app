@@ -36,10 +36,10 @@ do $test$
 
         -- 1. On prépare DEUX restaurants cobayes
         insert into restaurants (id, name, address, city, phone)
-        values (999, 'Test Resto Départ', 'Rue du Test', 'Bruxelles', '0470112233');
+        values (999, 'Test Resto Départ', 'Rue du Test', 'Bruxelles', '+32 485 65 69 12');
 
         insert into restaurants (id, name, address, city, phone)
-        values (888, 'Test Resto Arrivée', 'Avenue du Test', 'Bruxelles', '0470445566');
+        values (888, 'Test Resto Arrivée', 'Avenue du Test', 'Bruxelles', '+32 485 65 69 12');
 
         -- 2. On crée la table cobaye liée au premier restaurant (999)
         insert into tables (id, table_number, capacity, restaurant)
