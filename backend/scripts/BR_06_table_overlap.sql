@@ -3,61 +3,113 @@ set search_path to public;
 /* -------------------------------------------------------------------------
    (BR-06) : Une table ne peut pas faire l'objet de deux réservations terminées
    ou confirmées pour une même date et un même service.
+      Tables concernées :
+   reservation_tables :
+    insert : oui
+    update : non
+    delete : non
+   reservations:
+    insert : non car à la création d'une résa, pas encore de tables assignées
+    update : oui si on passe d'un statut pending à confirmed par ex.
+            ou si on change le date d'une resa pour un jour/heure où
+            une table de la résa est dejà prise par une autre résa
+    delete : non
    ------------------------------------------------------------------------- */
-create or replace function check_table_availability()
-    returns trigger as $$
-declare
-    res_restaurant int;
-    res_date date;
-    res_time time;
-    res_service_id int;
+
+select rt.reservation
+    from reservation_tables rt
+        join reservations r on rt.reservation = r.id
+        /*On vérifie le statut*/
+    where r.status in ('confirmed'::status_type, 'completed'::status_type) AND
+          exists(
+              SELECT 1
+              FROM reservations res
+                    join reservation_tables rt2 on rt2.reservation = res.id
+              where res.datetime::date = r.datetime::date AND
+                and res.status in ('confirmed'::status_type, 'completed'::status_type) AND
+                    exists(
+                        select 1
+                        from services
+                        where
+                              /*Même restaurant*/
+                              services.restaurant = res.restaurant and
+                              services.restaurant = r.restaurant and
+                              /*Même date*/
+                              services.day_of_week = extract(isodow from res.datetime::date)::int and
+                              services.day_of_week = extract(isodow from r.datetime::date)::int and
+                              /*Même service*/
+                              services.start_time <= res.datetime::time and
+                              services.end_time > res.datetime::time and
+                              services.start_time <= r.datetime::time and
+                              services.end_time > r.datetime::time and
+                              /*Même table*/
+                              rt2."table" = rt.table and
+                              /*réservartion  différente*/
+                              r.id <> res.id
+                    )
+
+
+          );
+
+create or replace function check_tables_availability()
+    returns trigger as
+$$
 begin
-    -- 1. Récupérer les infos (date et heure séparées) de la réservation concernée
-    select restaurant, datetime::date, datetime::time
-    into res_restaurant, res_date, res_time
-    from reservations
-    where id = new.reservation;
+    if exists(select rt.reservation
+              from reservation_tables rt
+                       join reservations r on rt.reservation = r.id
+              /*On vérifie le statut*/
+              where r.status in ('confirmed'::status_type, 'completed'::status_type) AND
+                  exists(
+                      SELECT 1
+                      FROM reservations res
+                               join reservation_tables rt2 on rt2.reservation = res.id
+                      where res.datetime::date = r.datetime::date AND
+                            res.status in ('confirmed'::status_type, 'completed'::status_type) AND
+                          exists(
+                              select 1
+                              from services
+                              where
+                                  /*Même restaurant*/
+                                  services.restaurant = res.restaurant and
+                                  services.restaurant = r.restaurant and
+                                  /*Même date*/
+                                  services.day_of_week = extract(isodow from res.datetime::date)::int and
+                                  services.day_of_week = extract(isodow from r.datetime::date)::int and
+                                  /*Même service*/
+                                  services.start_time <= res.datetime::time and
+                                  services.end_time > res.datetime::time and
+                                  services.start_time <= r.datetime::time and
+                                  services.end_time > r.datetime::time and
+                                  /*Même table*/
+                                  rt2."table" = rt.table and
+                                  /*réservartion  différente*/
+                                  r.id <> res.id
+                          )
 
-    -- 2. Identifier à quel service (ID) correspond l'heure de cette réservation
-    select id into res_service_id
-    from services
-    where restaurant = res_restaurant
-      and day_of_week = extract(isodow from res_date)::int
-      and res_time >= start_time
-      and res_time <= end_time
-    limit 1;
 
-    -- 3. Vérifier s'il y a un chevauchement (Même table, même date, même service, statut confirmé/terminé)
-    if exists (
-        select 1
-        from reservation_tables rt
-                 join reservations r on rt.reservation = r.id
-        where rt."table" = new."table"  -- Utilisation des guillemets car "table" est un mot réservé SQL
-          and r.datetime::date = res_date
-          and r.status in ('confirmed', 'completed')
-          and r.id != new.reservation
-          and exists (
-            -- On s'assure que l'autre réservation tombe bien dans le MÊME service
-            select 1 from services s
-            where s.id = res_service_id
-              and extract(isodow from r.datetime::date)::int = s.day_of_week
-              and r.datetime::time >= s.start_time
-              and r.datetime::time <= s.end_time
-        )
-    ) then
-        raise exception 'La table % est déjà occupée pour ce service le %.', new."table", res_date
-            using errcode = 'restrict_violation';
+                  ))
+    then
+        raise exception 'Une table ne peut pas faire l''objet de deux réservations terminées
+   ou confirmées pour une même date et un même service.';
     end if;
 
-    return new;
+    return null;
 end;
-$$ language plpgsql;
+$$ language plpgsql security definer;
+
+
 
 /* -------------------------------------------------------------------------
    TRIGGER
    ------------------------------------------------------------------------- */
-drop trigger if exists trg_check_table_availability on reservation_tables;
-create trigger trg_check_table_availability
-    before insert or update on reservation_tables
+drop trigger if exists trg_check_table_availability_on_reservation_tables on reservation_tables;
+create trigger trg_check_table_availability_on_reservation_tables
+    after insert on reservation_tables
     for each row
-execute function check_table_availability();
+execute function check_tables_availability();
+drop trigger if exists trg_check_table_availability_on_reservations on reservations;
+create trigger trg_check_table_availability_on_reservations
+    after update of status, datetime on reservations
+    for each row
+execute function check_tables_availability();
