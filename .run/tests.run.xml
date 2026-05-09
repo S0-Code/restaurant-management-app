@@ -4,10 +4,27 @@
     <script-file value="$PROJECT_DIR$/backend/tests/test_02_impersonation.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_03_reset_database.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_04.00_br_email_unique.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_05_user_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_06_restaurants_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_07_check_immutable_columns.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_08_reservations_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_09_tables_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_10_services_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_11_temporal_rules.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_01_reservation_user_role.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_02_guests_number.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_03_reservations_tables.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_04_reservation_time.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_05_reservation_time_matches_slot.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_06_table_overlap.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_09_reservation_lifecycle.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_11_reservation_final_status.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_14_reservations_in_the_past.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_07_service_overlap.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_08_service_slot_alignment.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_10_restaurant_manager.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
-    <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="backend" run_configuration_type="DatabaseScript" />
-    </method>
+    <method v="2" />
   </configuration>
 </component>
