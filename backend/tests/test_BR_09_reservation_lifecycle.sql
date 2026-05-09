@@ -14,7 +14,7 @@ begin
 
         -- 1. INSERT valide (pending)
 insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-values (999, 3, 1, current_timestamp + interval '2 days', 2, 'pending');
+values (999, 3, 1, get_current_time() + interval '2 days', 2, 'pending');
 
 -- 2. Transition valide (pending -> confirmed)
 update reservations set status = 'confirmed' where id = 999;
@@ -35,7 +35,7 @@ begin
 
         perform should_fail($$
             insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-            values (888, 3, 1, current_timestamp + interval '2 days', 2, 'confirmed');
+            values (888, 3, 1, get_current_time() + interval '2 days', 2, 'confirmed');
         $$, 'restrict_violation');
 end
 $test$;
@@ -50,7 +50,7 @@ begin
 
         -- Préparation d'une réservation valide
 insert into reservations (id, client, restaurant, datetime, number_of_guests, status)
-values (777, 3, 1, current_timestamp + interval '2 days', 2, 'pending');
+values (777, 3, 1, get_current_time() + interval '2 days', 2, 'pending');
 
 -- Tentative de saut d'étape (pending -> completed)
 perform should_fail($$

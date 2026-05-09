@@ -1,7 +1,8 @@
 set search_path to public;
 
 /* -------------------------------------------------------------------------
-   (BR-06) : Une table ne peut pas faire l'objet de deux réservations terminées ou confirmées pour une même date et un même service.
+   (BR-06) : Une table ne peut pas faire l'objet de deux réservations terminées
+   ou confirmées pour une même date et un même service.
    ------------------------------------------------------------------------- */
 create or replace function check_table_availability()
     returns trigger as $$
