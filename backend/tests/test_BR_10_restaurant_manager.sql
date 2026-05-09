@@ -36,6 +36,8 @@ insert into restaurant_managers (restaurant, manager) values (restaurant_id, man
 
 -- Suppression d'un seul manager (doit réussir car il en reste un)
 delete from restaurant_managers where restaurant = restaurant_id and manager = manager1_id;
+
+set constraints all immediate;
 end;
 $test$;
 rollback;
@@ -45,7 +47,23 @@ rollback;
    TESTS NÉGATIFS (Doivent échouer)
    ------------------------------------------------------------------------- */
 
-/* Négatif 1 : Suppression du dernier manager */
+/* Négatif 1 : Création d'un restaurant sans manager */
+begin;
+do $test$
+begin
+        raise notice 'TEST: Création d un restaurant sans manager (doit échouer)';
+
+        perform should_fail(
+                'insert into restaurants (name, address, city, phone, slot_duration)
+                 values (''Resto BR10 Vide'', ''Rue du Test'', ''Bruxelles'', ''+32 485 65 69 12'', 30)',
+                'raise_exception'
+                );
+end;
+$test$;
+rollback;
+
+
+/* Négatif 2 : Suppression du dernier manager */
 begin;
 do $test$
     declare
@@ -74,7 +92,7 @@ $test$;
 rollback;
 
 
-/* Négatif 2 : Modification (Update) du dernier manager vers un autre restaurant */
+/* Négatif 3 : Modification (Update) du dernier manager vers un autre restaurant */
 begin;
 do $test$
     declare
@@ -99,7 +117,7 @@ values ('Resto BR10 Move 2', 'Rue 2', 'Bruxelles', '+32 485 65 69 12', 30)
 -- On assigne le manager au Resto 1
 insert into restaurant_managers (restaurant, manager) values (restaurant1_id, manager_id);
 
--- Tentative de déplacer ce manager vers le Resto 2 (laisse le Resto 1 vide)
+-- Tentative de déplacer ce manager vers le Resto 2
 perform should_fail(
                 'update restaurant_managers set restaurant = ' || restaurant2_id || ' where restaurant = ' || restaurant1_id || ' and manager = ' || manager_id,
                 'raise_exception'

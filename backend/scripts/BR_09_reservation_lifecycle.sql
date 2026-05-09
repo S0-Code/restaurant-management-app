@@ -7,10 +7,9 @@ create or replace function enforce_initial_reservation_status()
 returns trigger as $$
 begin
     -- On vérifie si quelqu'un essaie de créer une réservation qui n'est pas 'pending'
-    if new.status is distinct from 'pending' then
-        raise exception 'Une nouvelle réservation doit obligatoirement avoir le statut "pending".'
-        using errcode = 'restrict_violation';
-end if;
+    if new.status is distinct from 'pending'::status_type then
+        raise exception 'Une nouvelle réservation doit obligatoirement avoir le statut "pending".';
+    end if;
 
 return new;
 end;
@@ -35,16 +34,14 @@ begin
 end if;
 
     -- Vérification des transitions depuis 'pending'
-    if old.status = 'pending' and new.status not in ('confirmed', 'cancelled') then
-        raise exception 'Transition invalide : Impossible de passer directement de "pending" à "%".', new.status
-        using errcode = 'restrict_violation';
-end if;
+    if old.status = 'pending' and new.status not in ('confirmed'::status_type, 'cancelled'::status_type) then
+        raise exception 'Transition invalide : Impossible de passer directement de "pending" à "%".', new.status;
+    end if;
 
     -- Vérification des transitions depuis 'confirmed'
     -- (La règle temporelle confirmed -> pending est déjà gérée par l'autre trigger)
-    if old.status = 'confirmed' and new.status not in ('completed', 'cancelled', 'pending') then
-        raise exception 'Transition invalide : Impossible de passer de "confirmed" à "%".', new.status
-        using errcode = 'restrict_violation';
+    if old.status = 'confirmed' and new.status not in ('completed'::status_type, 'cancelled'::status_type, 'pending'::status_type) then
+        raise exception 'Transition invalide : Impossible de passer de "confirmed" à "%".', new.status;
 end if;
 
     -- Note : Les statuts 'completed' et 'cancelled' sont déjà bloqués par la BR-11 !
@@ -55,6 +52,6 @@ $$ language plpgsql;
 
 drop trigger if exists trg_check_reservation_lifecycle on reservations;
 create trigger trg_check_reservation_lifecycle
-    before update on reservations
+    before update of status on reservations
     for each row
     execute function check_reservation_lifecycle();
