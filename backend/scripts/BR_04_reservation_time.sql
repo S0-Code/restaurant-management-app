@@ -39,7 +39,8 @@ begin
                   from services s
                   where s.restaurant = r.restaurant
                     and s.day_of_week = extract(isodow from r.datetime)
-                    and r.datetime::time between s.start_time and s.end_time
+                    and r.datetime::time >= s.start_time
+                    and r.datetime::time < s.end_time
               ))
     then
         raise exception 'Les réservations ''pending'' ''confirmed'' et ''completed'' doivent avoir lieu durant un service existant dans ce restaurant pour le jour de la réservation';
