@@ -10,7 +10,7 @@ begin
     -- Si la réservation était déjà 'completed' ou 'cancelled', on bloque tout
     if old.status in ('completed', 'cancelled') then
         raise exception 'Une réservation avec le statut "%" ne peut plus être modifiée.', old.status
-        using errcode = 'restrict_violation';
+        using errcode = 'raise_exception';
 end if;
 
 return new;
