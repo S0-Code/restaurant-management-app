@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
-  runApp(TestPage());
-}
+import 'package:mockups/mockup_carousel_screen.dart';
 
-class TestPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('fr_FR', null);
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Carousel des mockups',
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
-        colorScheme: .fromSeed(seedColor: Colors.blue),
       ),
-      home: Scaffold(
-        appBar: AppBar(title: Text('Test Page')),
-        body: Center(
-          child: Text('Welcome group c05!', style: TextStyle(fontSize: 24)),
-        ),
-      ),
-    );
-  }
+      home: const MockupCarouselScreen(),
+    ),
+  );
 }
