@@ -1,23 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
-  runApp(TestPage());
-}
+import 'package:prbd_2526_c05/app/my_app.dart';
+import 'package:prbd_2526_c05/core/tools/params.dart';
 
-class TestPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: .fromSeed(seedColor: Colors.blue),
-      ),
-      home: Scaffold(
-        appBar: AppBar(title: Text('Test Page')),
-        body: Center(
-          child: Text('Welcome group c05!', style: TextStyle(fontSize: 24)),
-        ),
-      ),
-    );
-  }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('fr_FR', null);
+  await Params.init();
+  runApp(ProviderScope(child: MyApp()));
 }
