@@ -83,21 +83,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _login(BuildContext context, String mail, {String? password}) async {
     await ref.read(securityProvider.notifier).login(mail, password ?? mail);
-    bool isUserAdmin = await ref.read(securityProvider.notifier).isManager;
-    var securityState = ref.read(securityProvider);
+
+    final securityState = ref.read(securityProvider);
 
     if (!context.mounted) return;
 
     securityState.when(
-      data: (_) => isUserAdmin ?
-      Navigator.pushReplacementNamed(context, '/managerHome') :
-      Navigator.pushReplacementNamed(context, '/clientHome')
-      ,
-      error: (error, _) => DialogBox(
-        title: 'Login failed',
-        message: 'Bad pseudo and/or password!',
-        actions: ['OK'],
-      ).show(context),
+      data: (_) {
+        final isUserAdmin = ref.read(securityProvider.notifier).isManager;
+
+        Navigator.pushReplacementNamed(
+          context,
+          isUserAdmin ? '/managerHome' : '/clientHome',
+        );
+      },
+      error: (error, _) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email ou mot de passe incorrect'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
       loading: () {},
     );
   }
