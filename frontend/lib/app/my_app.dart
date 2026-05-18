@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:prbd_2526_c05/providers/security_provider.dart';
 import 'package:prbd_2526_c05/views/pages/login_page.dart';
-import 'package:prbd_2526_c05/views/pages/my_home_page.dart';
+import 'package:prbd_2526_c05/views/pages/client_home_page.dart';
 import 'package:prbd_2526_c05/views/pages/signup_page.dart';
+
+import '../views/pages/manager_home_page.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -20,7 +22,8 @@ class MyApp extends ConsumerWidget {
       initialRoute: securityNotifier.isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => LoginPage(),
-        '/home': (context) => MyHomePage(),
+        '/clientHome': (context) => ClientHomePage(),
+        '/managerHome': (context) => ManagerHomePage(),
         '/signup': (context) => SignupPage(),
       },
     );

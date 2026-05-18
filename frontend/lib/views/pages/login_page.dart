@@ -8,19 +8,6 @@ import '../../core/widgets/dialog_box.dart';
 import '../../models/user.dart';
 import '../../providers/security_provider.dart';
 
-// void main() async {
-//   await initializeDateFormatting('fr_FR', null);
-//   runApp(
-//     MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-//         useMaterial3: true,
-//       ),
-//       home: const LoginPage(),
-//     ),
-//   );
-// }
 
 class LoginPage extends ConsumerStatefulWidget {
   @override
@@ -285,12 +272,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _login(BuildContext context, String mail, {String? password}) async {
     await ref.read(securityProvider.notifier).login(mail, password ?? mail);
+    bool isUserAdmin = await ref.read(securityProvider.notifier).isManager;
     var securityState = ref.read(securityProvider);
 
     if (!context.mounted) return;
 
     securityState.when(
-      data: (_) => Navigator.pushReplacementNamed(context, '/home'),
+      data: (_) => isUserAdmin ?
+      Navigator.pushReplacementNamed(context, '/managerHome') :
+      Navigator.pushReplacementNamed(context, '/clientHome')
+      ,
       error: (error, _) => DialogBox(
         title: 'Login failed',
         message: 'Bad pseudo and/or password!',
