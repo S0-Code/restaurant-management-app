@@ -8,19 +8,6 @@ import '../../core/widgets/dialog_box.dart';
 import '../../models/user.dart';
 import '../../providers/security_provider.dart';
 
-// void main() async {
-//   await initializeDateFormatting('fr_FR', null);
-//   runApp(
-//     MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-//         useMaterial3: true,
-//       ),
-//       home: const LoginPage(),
-//     ),
-//   );
-// }
 
 class LoginPage extends ConsumerStatefulWidget {
   @override
@@ -29,6 +16,7 @@ class LoginPage extends ConsumerStatefulWidget {
 
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+
   final _emailController = ValidatingTextEditingController(
     validator: User.validateEmail,
     initialValue: '',
@@ -49,9 +37,81 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final securityState = ref.read(securityProvider);
+
+    securityState.whenData((token) async {
+      bool isLoggedIn = ref.read(securityProvider.notifier).isLoggedIn;
+      if (isLoggedIn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+
+          final isManager = ref.read(securityProvider.notifier).isManager;
+
+          Navigator.pushReplacementNamed(
+            context,
+            isManager ? '/managerHome' : '/clientHome',
+          );
+        });
+      }
+    });
+
+    return _loginForm(context);
+
+
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm(BuildContext context) {
+    if (!_validateForm()) return;
+    _login(context, _emailController.text, password: _passwordController.text);
+  }
+
+  bool _validateForm() {
+    _emailController.validate();
+    _passwordController.validate();
+    return _isFormValid;
+  }
+
+  bool get _isFormValid =>
+      _emailController.isValid == true && _passwordController.isValid == true;
+
+  void _login(BuildContext context, String mail, {String? password}) async {
+    await ref.read(securityProvider.notifier).login(mail, password ?? mail);
+
+    final securityState = ref.read(securityProvider);
+
+    if (!context.mounted) return;
+
+    securityState.when(
+      data: (_) {
+        final isUserAdmin = ref.read(securityProvider.notifier).isManager;
+
+        Navigator.pushReplacementNamed(
+          context,
+          isUserAdmin ? '/managerHome' : '/clientHome',
+        );
+      },
+      error: (error, _) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email ou mot de passe incorrect'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+      loading: () {},
+    );
+  }
+
+  Widget _loginForm(BuildContext context) {
     final theme = Theme.of(context);
     final simulatedTime = DateTime(2024, 12, 4, 16, 0);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Connexion'),
@@ -260,43 +320,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
       ),
     );
-  }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _submitForm(BuildContext context) {
-    if (!_validateForm()) return;
-    _login(context, _emailController.text, password: _passwordController.text);
-  }
-
-  bool _validateForm() {
-    _emailController.validate();
-    _passwordController.validate();
-    return _isFormValid;
-  }
-
-  bool get _isFormValid =>
-      _emailController.isValid == true && _passwordController.isValid == true;
-
-  void _login(BuildContext context, String mail, {String? password}) async {
-    await ref.read(securityProvider.notifier).login(mail, password ?? mail);
-    var securityState = ref.read(securityProvider);
-
-    if (!context.mounted) return;
-
-    securityState.when(
-      data: (_) => Navigator.pushReplacementNamed(context, '/home'),
-      error: (error, _) => DialogBox(
-        title: 'Login failed',
-        message: 'Bad pseudo and/or password!',
-        actions: ['OK'],
-      ).show(context),
-      loading: () {},
-    );
   }
 }
+

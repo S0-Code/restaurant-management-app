@@ -52,7 +52,7 @@ class SecurityNotifier extends AsyncNotifier<String?> {
     }
   }
 
-  bool get isAdmin => _getRoleFromToken(state.value) == 'admin';
+  bool get isManager => _getRoleFromToken(state.value) == 'manager';
 
   static String? _getRoleFromToken(String? token) {
     if (token == null) return null;

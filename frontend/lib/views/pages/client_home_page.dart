@@ -1,25 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-void main() async {
-  await initializeDateFormatting('fr_FR', null);
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
-    ),
-  );
+import '../../providers/security_provider.dart';
+
+// void main() async {
+//   await initializeDateFormatting('fr_FR', null);
+//   runApp(
+//     MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       theme: ThemeData(
+//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+//         useMaterial3: true,
+//       ),
+//       home: const MyHomePage(),
+//     ),
+//   );
+// }
+class ClientHomePage extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<ClientHomePage> createState() => _ClientHomePageState();
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+class _ClientHomePageState extends ConsumerState<ClientHomePage> {
+
+
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(securityProvider);
+    final securityNotifier = ref.read(securityProvider.notifier);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -39,7 +49,10 @@ class MyHomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Déconnexion',
-            onPressed: () {},
+            onPressed: () {
+              securityNotifier.logout();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
           ),
         ],
         elevation: 2,
