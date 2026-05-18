@@ -19,7 +19,7 @@ class MyApp extends ConsumerWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      initialRoute: securityNotifier.isLoggedIn ? '/home' : '/login',
+      initialRoute: securityNotifier.isLoggedIn ? (securityNotifier.isManager ? '/managerhome' : 'clientHome')  : '/login',
       routes: {
         '/login': (context) => LoginPage(),
         '/clientHome': (context) => ClientHomePage(),
