@@ -69,8 +69,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _submitForm(BuildContext context) {
     if (!_validateForm()) return;
-    _login(context, _emailController.text, password: _passwordController.text);
+    _login(context, _emailController.text, _passwordController.text);
   }
+
+
 
   bool _validateForm() {
     _emailController.validate();
@@ -81,8 +83,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool get _isFormValid =>
       _emailController.isValid == true && _passwordController.isValid == true;
 
-  void _login(BuildContext context, String mail, {String? password}) async {
-    await ref.read(securityProvider.notifier).login(mail, password ?? mail);
+  void _login(BuildContext context, String mail, String password) async {
+    await ref.read(securityProvider.notifier).login(mail, password);
 
     final securityState = ref.read(securityProvider);
 
@@ -252,7 +254,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            _login(context, 'brlacroix@epfc.eu', 'Password1,');
+                          },
                           icon: const Icon(Icons.person),
                           label: const Text('Client (Bruno)'),
                           style: OutlinedButton.styleFrom(
@@ -263,7 +267,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            _login(context, 'mamichel@epfc.eu', 'Password1,');
+                          },
                           icon: const Icon(Icons.person),
                           label: const Text('Client (Marc)'),
                           style: OutlinedButton.styleFrom(
@@ -278,7 +284,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            _login(context, 'bepenelle@epfc.eu', 'Password1,');
+                          },
                           icon: const Icon(Icons.manage_accounts),
                           label: const Text('Manager (Benoît)'),
                           style: OutlinedButton.styleFrom(
@@ -289,7 +297,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            _login(context, 'gedielman@epfc.eu', 'Password1,');
+                          },
                           icon: const Icon(Icons.manage_accounts),
                           label: const Text('Manager (Geoffrey)'),
                           style: OutlinedButton.styleFrom(
