@@ -54,6 +54,7 @@ $$ language plpgsql;
    ------------------------------------------------------------------------- */
 drop trigger if exists trg_check_service_time_alignment on services;
 create trigger trg_check_service_time_alignment
-    before insert or update on services
+    before insert or update of restaurant, start_time, end_time
+    on services
     for each row
 execute function check_service_time_alignment();

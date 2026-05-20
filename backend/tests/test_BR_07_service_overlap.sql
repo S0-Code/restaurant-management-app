@@ -1,89 +1,111 @@
 set search_path to public;
 
-/* =========================================================================
-   RÈGLES MÉTIER : SERVICES (BR-07 Chevauchement de services)
-   ========================================================================= */
-
 /* -------------------------------------------------------------------------
-   TESTS POSITIFS (Autorisés)
-   ------------------------------------------------------------------------- */
-begin;
-do $test$
-    begin
-        raise notice 'TEST: Insertion de deux services distincts (Midi et Soir) le même jour';
-
-        -- 1. Premier service : 12:00 -> 14:00 (Lundi = 1)
-        insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '12:00:00', '14:00:00');
-
-        -- 2. Deuxième service : 19:00 -> 22:30 (Lundi = 1)
-        -- Aucun chevauchement, doit passer.
-        insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '19:00:00', '22:30:00');
-    end
-$test$;
-rollback;
-
-
-/* -------------------------------------------------------------------------
-   TESTS NÉGATIFS (Doivent échouer)
+   TESTS BR-07 : Pour un même jour de la semaine,
+   les services d'un restaurant ne peuvent pas se chevaucher.
    ------------------------------------------------------------------------- */
 
-/* Négatif 1 : Chevauchement au début */
+/* 1. Insert correct : même jour, même resto, services côte à côte */
 begin;
 do $test$
+    declare
+        restaurant_id bigint;
     begin
-        raise notice 'TEST: Nouveau service qui commence PENDANT un service existant (doit échouer)';
+        raise notice 'TEST BR-07: Services côte à côte correct (insert)';
 
-        -- Préparation : Service existant 12:00 -> 14:00
-        insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '12:00:00', '14:00:00');
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto BR07 OK', 'Rue du Test 123', 'Bruxelles', '+32 485 65 69 10', 30)
+        returning id into restaurant_id;
 
-        -- Tentative : 13:00 -> 15:00 (Chevauche de 13h à 14h)
-        perform should_fail($$
         insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '13:00:00', '15:00:00');
-    $$, 'restrict_violation');
-    end
+        values (restaurant_id, 1, '12:00', '14:00');
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 1, '14:00', '16:00');
+    end;
 $test$;
 rollback;
 
 
-/* Négatif 2 : Chevauchement à la fin */
+/* 2. Insert incorrect : même jour, même resto, chevauchement */
 begin;
 do $test$
+    declare
+        restaurant_id bigint;
     begin
-        raise notice 'TEST: Nouveau service qui finit PENDANT un service existant (doit échouer)';
+        raise notice 'TEST BR-07: Chevauchement incorrect (insert)';
 
-        -- Préparation : Service existant 12:00 -> 14:00
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto BR07 BAD', 'Rue du Test 123', 'Bruxelles', '+32 485 65 69 11', 30)
+        returning id into restaurant_id;
+
         insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '12:00:00', '14:00:00');
+        values (restaurant_id, 1, '12:00', '14:00');
 
-        -- Tentative : 11:00 -> 12:30 (Chevauche de 12h à 12h30)
         perform should_fail($$
-        insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '11:00:00', '12:30:00');
-    $$, 'restrict_violation');
-    end
+            insert into services (restaurant, day_of_week, start_time, end_time)
+            values ($$ || restaurant_id || $$, 1, '13:00', '15:00')
+        $$, 'raise_exception');
+    end;
 $test$;
 rollback;
 
 
-/* Négatif 3 : Inclusion totale */
+/* 3. Update correct : modification sans chevauchement */
 begin;
 do $test$
+    declare
+        restaurant_id bigint;
+        service_id bigint;
     begin
-        raise notice 'TEST: Nouveau service qui englobe totalement un service existant (doit échouer)';
+        raise notice 'TEST BR-07: Modification sans chevauchement correct (update)';
 
-        -- Préparation : Service existant 12:00 -> 14:00
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto BR07 UP OK', 'Rue du Test 123', 'Bruxelles', '+32 485 65 69 12', 30)
+        returning id into restaurant_id;
+
         insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '12:00:00', '14:00:00');
+        values (restaurant_id, 1, '12:00', '14:00');
 
-        -- Tentative : 11:00 -> 15:00
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 1, '16:00', '18:00')
+        returning id into service_id;
+
+        update services
+        set start_time = '14:00',
+            end_time = '16:00'
+        where id = service_id;
+    end;
+$test$;
+rollback;
+
+
+/* 4. Update incorrect : modification qui crée un chevauchement */
+begin;
+do $test$
+    declare
+        restaurant_id bigint;
+        service_id bigint;
+    begin
+        raise notice 'TEST BR-07: Modification avec chevauchement incorrect (update)';
+
+        insert into restaurants (name, address, city, phone, slot_duration)
+        values ('Resto BR07 UP BAD', 'Rue du Test 123', 'Bruxelles', '+32 485 65 69 13', 30)
+        returning id into restaurant_id;
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 1, '12:00', '14:00');
+
+        insert into services (restaurant, day_of_week, start_time, end_time)
+        values (restaurant_id, 1, '16:00', '18:00')
+        returning id into service_id;
+
         perform should_fail($$
-        insert into services (restaurant, day_of_week, start_time, end_time)
-        values (1, 1, '11:00:00', '15:00:00');
-    $$, 'restrict_violation');
-    end
+            update services
+            set start_time = '13:00',
+                end_time = '17:00'
+            where id = $$ || service_id
+            , 'raise_exception');
+    end;
 $test$;
 rollback;

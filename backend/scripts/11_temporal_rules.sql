@@ -12,8 +12,7 @@ begin
 
         -- On vérifie si la réservation est dans le passé par rapport à l'instant T
         if new.datetime <= get_current_time() then
-            raise exception 'Une réservation passée ou en cours ne peut pas repasser au statut "pending".'
-            using errcode = 'restrict_violation';
+            raise exception 'Une réservation passée ou en cours ne peut pas repasser au statut "pending".';
 end if;
 
 end if;

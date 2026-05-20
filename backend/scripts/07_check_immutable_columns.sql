@@ -54,4 +54,18 @@ create trigger trg_prevent_restaurant_of_service_update
     for each row
     execute function prevent_column_update('restaurant');
 
+/*On ne peut pas modifier le restaurant ou le client d'une réservation.*/
+
+drop  trigger if exists trg_prevent_restaurant_of_reservation_update on reservations;
+create trigger trg_prevent_restaurant_of_reservation_update
+    before update of restaurant on reservations
+    for each row
+execute function prevent_column_update('restaurant');
+
+drop  trigger if exists trg_prevent_client_of_reservation_update on reservations;
+create trigger trg_prevent_client_of_reservation_update
+    before update of client on reservations
+    for each row
+execute function prevent_column_update('client');
+
 
