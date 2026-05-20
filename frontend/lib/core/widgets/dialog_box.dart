@@ -20,14 +20,18 @@ class DialogBox extends StatelessWidget {
     return AlertDialog(
       title: Text(title),
       content: Text(message),
-      actions: actions
-          .map(
-            (action) => TextButton(
+      actions: actions.map((action) {
+        final isDanger = action == 'Réinitialiser';
+
+        return TextButton(
           onPressed: () => Navigator.of(context).pop(action),
+          style: TextButton.styleFrom(
+            backgroundColor: isDanger ? Colors.red : null,
+            foregroundColor: isDanger ? Colors.white : null,
+          ),
           child: Text(action),
-        ),
-      )
-          .toList(),
+        );
+      }).toList(),
     );
   }
 }
