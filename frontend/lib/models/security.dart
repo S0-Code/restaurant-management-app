@@ -16,6 +16,11 @@ class Security {
     String token = body['token'];
     return token;
   }
+  static Future<void> resetDatabase() async {
+    await ApiClient.post(
+      'reset_database'
+    );
+  }
 
   static Future<bool> checkPseudoAvailable({String? pseudo}) async {
     final response = await ApiClient.post(

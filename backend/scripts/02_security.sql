@@ -253,4 +253,3 @@ grant execute on function auth.id() to anon;
 grant execute on function auth.email() to anon;
 grant execute on function auth.role() to anon;
 
-execute logout_for_test();
