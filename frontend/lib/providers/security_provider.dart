@@ -16,9 +16,24 @@ class SecurityNotifier extends AsyncNotifier<String?> {
     state = AsyncData(Params.getValue('token'));
     return state.value;
   }
+  Future<void> resetDatabase() async {
+    state = const AsyncLoading();
+    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final previousState = state;
+      await Security.resetDatabase();
+      state = previousState;
+    } catch (e) {
+      state = AsyncError(
+          "Something went wrong!\nPlease try again later.",
+          StackTrace.current);
+    }
+  }
 
   Future<void> login(String email, String password) async {
     state = const AsyncLoading();
+    await Future.delayed(const Duration(seconds: 1));
+
     try {
       var token = await Security.login(email, password);
       Params.setValue('token', token);

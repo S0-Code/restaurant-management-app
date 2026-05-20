@@ -31,7 +31,7 @@ begin
         raise exception 'BR-12 : Une réservation en attente ou annulée ne peut pas être associée à une table.';
     end if;
 
-    return new;
+    return null;
 end;
 $$ language plpgsql;
 
@@ -53,25 +53,27 @@ begin
         end if;
     end if;
 
-    return new;
+    return null;
 end;
 $$ language plpgsql;
 
 
 /* -------------------------------------------------------------------------
-   TRIGGERS
+   TRIGGERS DIFFÉRÉS (DEFERRABLE) POUR ÉVITER L'EFFET DOMINO
    ------------------------------------------------------------------------- */
 
 -- Trigger sur reservation_tables
 drop trigger if exists trg_br12_reservation_tables_status on reservation_tables;
-create trigger trg_br12_reservation_tables_status
-    before insert or update on reservation_tables
+create constraint trigger trg_br12_reservation_tables_status
+    after insert or update on reservation_tables
+    deferrable initially deferred
     for each row
 execute procedure check_reservation_tables_status();
 
 -- Trigger sur reservations (uniquement sur le UPDATE de la colonne status)
 drop trigger if exists trg_br12_reservations_status_update on reservations;
-create trigger trg_br12_reservations_status_update
-    before update of status on reservations
+create constraint trigger trg_br12_reservations_status_update
+    after update of status on reservations
+    deferrable initially deferred
     for each row
 execute procedure check_reservations_status_update();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/tools/validating_text_editing_controller.dart';
@@ -37,27 +36,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final securityState = ref.read(securityProvider);
+    final securityState = ref.watch(securityProvider);
 
-    securityState.whenData((token) async {
-      bool isLoggedIn = ref.read(securityProvider.notifier).isLoggedIn;
-      if (isLoggedIn) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
+    return securityState.when(
+        data: (token)  {
+          //On renvoie l'utilisateur vers sa homePage s'il est déjà connecté
+          bool isLoggedIn = ref.read(securityProvider.notifier).isLoggedIn;
+          if (isLoggedIn) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
 
-          final isManager = ref.read(securityProvider.notifier).isManager;
+              final isManager = ref.read(securityProvider.notifier).isManager;
 
-          Navigator.pushReplacementNamed(
-            context,
-            isManager ? '/managerHome' : '/clientHome',
-          );
-        });
-      }
-    });
-
-    return _loginForm(context);
-
-
+              Navigator.pushReplacementNamed(
+                context,
+                isManager ? '/managerHome' : '/clientHome',
+              );
+            });
+          }
+          return _loginForm(context);
+        },
+        error: (error, _) => _loginForm(context),
+        loading: () => _loginForm(context, isLoading: true));
   }
 
   @override
@@ -69,8 +69,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _submitForm(BuildContext context) {
     if (!_validateForm()) return;
-    _login(context, _emailController.text, password: _passwordController.text);
+    _login(context, _emailController.text, _passwordController.text);
   }
+
+
 
   bool _validateForm() {
     _emailController.validate();
@@ -81,8 +83,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool get _isFormValid =>
       _emailController.isValid == true && _passwordController.isValid == true;
 
-  void _login(BuildContext context, String mail, {String? password}) async {
-    await ref.read(securityProvider.notifier).login(mail, password ?? mail);
+  void _resetDatabase() async {
+    final result = await DialogBox(
+        title: 'Réinitialiser la base de données',
+        message: 'Êtes-vous sûr de vouloir réinitialiser la base de données ? '
+            'Cette action supprimera toutes les données et les restaurera aux valeurs par défaut.',
+        actions: ['Annuler', 'Réinitialiser']
+    ).show(context);
+    if (result == 'Réinitialiser') {
+      try {
+        await ref.read(securityProvider.notifier).resetDatabase();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Base de données réintialisée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('La base de données n\'a pas pu être réinitialisée'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+    }
+
+  }
+
+  void _login(BuildContext context, String mail, String password) async {
+    await ref.read(securityProvider.notifier).login(mail, password);
 
     final securityState = ref.read(securityProvider);
 
@@ -105,11 +141,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         );
       },
-      loading: () {},
+      loading: () => _loginForm(context, isLoading : true),
     );
   }
 
-  Widget _loginForm(BuildContext context) {
+  Widget _loginForm(BuildContext context, {isLoading = false}) {
     final theme = Theme.of(context);
     final simulatedTime = DateTime(2024, 12, 4, 16, 0);
     return Scaffold(
@@ -150,177 +186,214 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Form(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 32),
+                          const Icon(
+                            Icons.restaurant,
+                            size: 80,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Connectez-vous',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            autofocus: true,
+                            autovalidateMode: AutovalidateMode
+                                .onUserInteraction,
+                            controller: _emailController,
+                            onFieldSubmitted: (_) => _submitForm(context),
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.email),
+                              errorText: _emailController.errorText,
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            autovalidateMode: AutovalidateMode
+                                .onUserInteraction,
+                            controller: _passwordController,
+                            onFieldSubmitted: (_) => _submitForm(context),
+                            decoration: InputDecoration(
+                              labelText: 'Mot de passe',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.lock),
+                              errorText: _passwordController.errorText,
+                            ),
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => _submitForm(context),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Se connecter'),
+                          ),
+                          const SizedBox(height: 6),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/signup'),
+                            child: const Text(
+                              'Pas encore de compte ? S\'inscrire',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                child: Form(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 32),
-                      const Icon(
-                        Icons.restaurant,
-                        size: 80,
-                        color: Colors.blue,
-                      ),
-                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 8),
                       const Text(
-                        'Connectez-vous',
+                        'Raccourcis de débogage',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.grey,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        autofocus: true,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        controller: _emailController,
-                        onFieldSubmitted: (_) => _submitForm(context),
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
-                          errorText: _emailController.errorText,
-                        ),
-                        keyboardType: TextInputType.emailAddress,
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Se connecter directement en tant que :',
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        controller: _passwordController,
-                        onFieldSubmitted: (_) => _submitForm(context),
-                        decoration: InputDecoration(
-                          labelText: 'Mot de passe',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.lock),
-                          errorText: _passwordController.errorText,
-                        ),
-                        obscureText: true,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                _login(
+                                    context, 'brlacroix@epfc.eu', 'Password1,');
+                              },
+                              icon: const Icon(Icons.person),
+                              label: const Text('Client (Bruno)'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                _login(
+                                    context, 'mamichel@epfc.eu', 'Password1,');
+                              },
+                              icon: const Icon(Icons.person),
+                              label: const Text('Client (Marc)'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () => _submitForm(context),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Se connecter'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                _login(
+                                    context, 'bepenelle@epfc.eu', 'Password1,');
+                              },
+                              icon: const Icon(Icons.manage_accounts),
+                              label: const Text('Manager (Benoît)'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                _login(
+                                    context, 'gedielman@epfc.eu', 'Password1,');
+                              },
+                              icon: const Icon(Icons.manage_accounts),
+                              label: const Text('Manager (Geoffrey)'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/signup'),
-                        child: const Text(
-                          'Pas encore de compte ? S\'inscrire',
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            _resetDatabase();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Réinitialiser la base de données'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Raccourcis de débogage',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Se connecter directement en tant que :',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.person),
-                          label: const Text('Client (Bruno)'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.person),
-                          label: const Text('Client (Marc)'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.manage_accounts),
-                          label: const Text('Manager (Benoît)'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.manage_accounts),
-                          label: const Text('Manager (Geoffrey)'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Réinitialiser la base de données'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                      ),
-                    ),
-                  ),
-                ],
+            if (isLoading) ...[
+              ModalBarrier(
+                dismissible: false,
+                color: Colors.black.withValues(alpha: 0.3),
               ),
-            ),
+
+              const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.indigo,
+                ),
+              ),
+            ],
           ],
         ),
+
       ),
     );
-
   }
-}
+  }
 
