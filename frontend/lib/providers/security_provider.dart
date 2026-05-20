@@ -25,7 +25,7 @@ class SecurityNotifier extends AsyncNotifier<String?> {
       state = AsyncData(token);
     } catch (e) {
       state = AsyncError(
-        "Email ou mot de passe incorrect.",
+        "Something went wrong!\nPlease try again later.",
         StackTrace.current,
       );
     }
@@ -52,7 +52,6 @@ class SecurityNotifier extends AsyncNotifier<String?> {
     }
   }
 
-  // Rôle récupéré depuis le token
   bool get isManager => _getRoleFromToken(state.value) == 'manager';
 
   static String? _getRoleFromToken(String? token) {
@@ -66,22 +65,16 @@ class SecurityNotifier extends AsyncNotifier<String?> {
   }
 
   Future<void> signup({
-    required String email,
+    required String pseudo,
     required String password,
-    required String fullName,
-    String? phone,
   }) async {
     state = const AsyncValue.loading();
     try {
-      await Security.signup(
-          email: email,
-          password: password,
-          fullName: fullName,
-          phone: phone
-      );
-      await login(email, password);
+      await Security.signup(pseudo: pseudo, password: password);
+      await login(pseudo, password);
+      state = AsyncValue.data(Params.getValue('token'));
     } catch (e) {
-      state = AsyncValue.error("L'inscription a échoué", StackTrace.current);
+      state = AsyncValue.error("Signup failed", StackTrace.current);
     }
   }
 }

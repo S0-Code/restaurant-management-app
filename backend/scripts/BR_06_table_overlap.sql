@@ -26,7 +26,7 @@ select rt.reservation
               FROM reservations res
                     join reservation_tables rt2 on rt2.reservation = res.id
               where res.datetime::date = r.datetime::date AND
-                    res.status in ('confirmed'::status_type, 'completed'::status_type) AND
+                and res.status in ('confirmed'::status_type, 'completed'::status_type) AND
                     exists(
                         select 1
                         from services
