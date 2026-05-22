@@ -4,19 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import '../../providers/security_provider.dart';
 
-// void main() async {
-//   await initializeDateFormatting('fr_FR', null);
-//   runApp(
-//     MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-//         useMaterial3: true,
-//       ),
-//       home: const MyHomePage(),
-//     ),
-//   );
-// }
+
 class ClientHomePage extends ConsumerStatefulWidget {
   @override
   ConsumerState<ClientHomePage> createState() => _ClientHomePageState();
