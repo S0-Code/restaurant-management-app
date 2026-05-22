@@ -1,7 +1,32 @@
+
+import 'dart:convert';
+
+import 'package:prbd_2526_c05/core/services/api_client.dart';
+
 import 'package:flutter/foundation.dart';
+
 import 'package:prbd_2526_c05/models/security.dart';
 
 class User {
+
+
+  int? id;
+  String email;
+  Role role;
+
+
+  User(this.id, this.email, this.role);
+
+
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      json['id'],
+      json['email'],
+      json['role'],
+    );
+  }
+
 
   static String? validateEmail(String? email) {
     if (email == null || email.trim().isEmpty) return 'Requis';
@@ -69,4 +94,9 @@ class User {
     }
     return null;
   }
+}
+
+enum Role {
+  client,
+  manager
 }

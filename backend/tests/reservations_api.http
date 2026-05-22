@@ -1,0 +1,16 @@
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiY2xpZW50Iiwic3ViIjoibWFtaWNoZWxAZXBmYy5ldSIsIm5hbWUiOiJNYXJjIiwidXNlcl9pZCI6NCwiZXhwIjoxNzc5NTQ1NjA5fQ.WOsZ77INOWtrpt84Bq2MapOnG5v3-VR57-te9VHU-ls
+
+POST http://localhost:3000/rpc/login
+Content-Type: application/json
+
+{
+  "email": "mamichel@epfc.eu",
+  "password": "Password1,"
+}
+
+###
+GET http://localhost:3000/rpc/get_reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+

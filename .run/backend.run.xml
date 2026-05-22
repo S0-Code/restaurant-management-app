@@ -23,6 +23,8 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_11_reservation_final_status.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_12_pending_cancelled_no_table.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_14_reservations_in_the_past.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/04_types.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.02_ep_reservations.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
     <method v="2" />
