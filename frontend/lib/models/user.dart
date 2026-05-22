@@ -17,25 +17,7 @@ class User {
 
   User(this.id, this.email, this.role);
 
-  static Future<User?> getUserByEmail(String? email) async {
-    if (email == null) {
-      return null;
-    }
 
-    final encodedEmail = Uri.encodeComponent(email);
-
-    final response = await ApiClient.get(
-      "getUserByEmail/$encodedEmail",
-    );
-
-    if (response.statusCode == 200) {
-      final body = json.decode(response.body);
-
-      return User.fromJson(body);
-    }
-
-    throw Exception('Failed to get user');
-  }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(

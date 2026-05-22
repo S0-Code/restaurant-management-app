@@ -3,18 +3,18 @@ import 'dart:convert';
 import '../core/services/api_client.dart';
 
 class Reservation {
-  int? id;
-  int clientId;
-  int restaurantId;
-  String dateTime;
-  int numberOfGuests;
-  Status status = Status.pending;
-  String ?specialRequests;
+  final int? id;
+  final String restaurantName;
+  final String cityName;
+  final DateTime dateTime;
+  final int numberOfGuests;
+  final Status status;
+  final String ?specialRequests;
 
   Reservation({
     this.id,
-    required this.clientId,
-    required this.restaurantId,
+    required this.restaurantName,
+    required this.cityName,
     required this.dateTime,
     required this.numberOfGuests,
     this.status = Status.pending,
@@ -22,9 +22,11 @@ class Reservation {
   });
 
   static Future<List<Reservation>> getReservations() async {
-    final response = await ApiClient.get("reservations");
-
+    final response = await ApiClient.get("get_reservations");
+    print(response.statusCode);
+    print(response.body);
     if (response.statusCode == 200) {
+
       final List<dynamic> body = json.decode(response.body);
 
       return body
@@ -32,15 +34,15 @@ class Reservation {
           .toList();
     }
 
-    throw Exception('Failed to get reservations');
+    throw Exception('Failed to get reservations : ${response.statusCode} ${response.body}');
   }
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
     return Reservation(
       id: json['id'],
-      clientId: json['client'],
-      restaurantId: json['restaurant'],
-      dateTime: json['datetime'],
+      restaurantName: json['restaurant_name'],
+      cityName: json['city_name'],
+      dateTime: DateTime.parse(json['datetime']),
       numberOfGuests: json['number_of_guests'],
       status: Status.values.firstWhere(
             (status) => status.name == json['status'],

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/date_symbol_data_local.dart';
-
+import 'package:prbd_2526_c05/providers/client_state.dart';
+import 'package:prbd_2526_c05/providers/client_state_provider.dart';
+import '../../models/reservation.dart';
 import '../../providers/security_provider.dart';
+import '../widgets/data_error_widget.dart';
+import '../widgets/reservation_card.dart';
 
 
 class ClientHomePage extends ConsumerStatefulWidget {
@@ -11,15 +14,38 @@ class ClientHomePage extends ConsumerStatefulWidget {
 }
 
 class _ClientHomePageState extends ConsumerState<ClientHomePage> {
-
-
-
   @override
   Widget build(BuildContext context) {
-    ref.watch(securityProvider);
+    final asyncClientState = ref.watch(clientStateProvider);
+    final clientStateNotifier = ref.read(clientStateProvider.notifier);
+
+
+    return asyncClientState.when(
+      data: (clientState) => data(context, clientState, clientStateNotifier),
+      error: (err, _) => DataErrorWidget(
+        error: err,
+        stackTrace: StackTrace.current,
+        notifier: clientStateNotifier,
+      ),
+      loading: () => data(
+        context,
+        asyncClientState.value ?? ClientState(reservations: []),
+        clientStateNotifier,
+        isLoading: true,
+      ),
+    );
+  }
+
+  Widget data(
+      BuildContext context,
+      ClientState clientState,
+      ClientStateNotifier notifier, {
+        isLoading = false
+      }
+      ) {
     final securityNotifier = ref.read(securityProvider.notifier);
     final theme = Theme.of(context);
-
+    final reservations = clientState.filteredReservations;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes réservations'),
@@ -32,7 +58,9 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Rafraîchir les données',
-            onPressed: () {},
+            onPressed: () {
+              notifier.refresh();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -68,301 +96,93 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         ),
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-              child: SegmentedButton<String>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(
-                    value: 'all',
-                    icon: Icon(Icons.list, size: 24),
-                    tooltip: 'Toutes',
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
+                  child: SegmentedButton<ReservationsFilter>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(
+                        value: ReservationsFilter.all,
+                        icon: Icon(Icons.list, size: 24),
+                        tooltip: 'Toutes',
+                      ),
+                      ButtonSegment(
+                        value: ReservationsFilter.pending,
+                        icon: Icon(Icons.pending, size: 24, color: Colors.orange),
+                        tooltip: 'En attente',
+                      ),
+                      ButtonSegment(
+                        value: ReservationsFilter.confirmed,
+                        icon: Icon(Icons.check_circle, size: 24, color: Colors.green),
+                        tooltip: 'Confirmées',
+                      ),
+                      ButtonSegment(
+                        value: ReservationsFilter.completed,
+                        icon: Icon(Icons.event_available, size: 24, color: Colors.blue),
+                        tooltip: 'Terminées',
+                      ),
+                      ButtonSegment(
+                        value: ReservationsFilter.cancelled,
+                        icon: Icon(Icons.cancel, size: 24, color: Colors.red),
+                        tooltip: 'Annulées',
+                      ),
+                    ],
+                    selected: {clientState.reservationsFilter},
+                    onSelectionChanged: (selection) {
+                      setState(() {
+                        notifier.setReservationsFilter(selection.first);
+                      });
+                    },
                   ),
-                  ButtonSegment(
-                    value: 'pending',
-                    icon: Icon(Icons.pending, size: 24, color: Colors.orange),
-                    tooltip: 'En attente',
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: reservations.isEmpty
+                      ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _emptyMessage(clientState.reservationsFilter),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      : ListView(
+                    padding: const EdgeInsets.all(16.0),
+                    children: reservations
+                        .map(
+                          (reservation) =>
+                          ReservationCard(reservation: reservation),
+                    )
+                        .toList(),
                   ),
-                  ButtonSegment(
-                    value: 'confirmed',
-                    icon: Icon(Icons.check_circle, size: 24, color: Colors.green),
-                    tooltip: 'Confirmées',
-                  ),
-                  ButtonSegment(
-                    value: 'completed',
-                    icon: Icon(Icons.event_available, size: 24, color: Colors.blue),
-                    tooltip: 'Terminées',
-                  ),
-                  ButtonSegment(
-                    value: 'cancelled',
-                    icon: Icon(Icons.cancel, size: 24, color: Colors.red),
-                    tooltip: 'Annulées',
-                  ),
-                ],
-                selected: const {'pending'},
-                onSelectionChanged: (_) {},
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Tooltip(
-                              message: 'En attente',
-                              child: const Icon(Icons.pending, size: 32, color: Colors.orange),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Bistrot du port',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 14),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Anvers',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.access_time, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'sam. 06/12/2024 à 19:00',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Icon(Icons.people, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '2 convives',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Tooltip(
-                              message: 'En attente',
-                              child: const Icon(Icons.pending, size: 32, color: Colors.orange),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'La Trattoria',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 14),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Bruxelles',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.access_time, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'ven. 05/12/2024 à 20:00',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Icon(Icons.people, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '4 convives',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Tooltip(
-                              message: 'Confirmée',
-                              child: const Icon(Icons.check_circle, size: 32, color: Colors.green),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'La Table du Chef',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 14),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Liège',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.access_time, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'dim. 01/12/2024 à 13:00',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Icon(Icons.people, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '4 convives',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Tooltip(
-                              message: 'Terminée',
-                              child: const Icon(Icons.event_available, size: 32, color: Colors.blue),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Sushi House',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 14),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Bruxelles',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.access_time, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'mar. 26/11/2024 à 19:30',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Icon(Icons.people, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '2 convives',
-                                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            if (isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.25),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
               ),
-            ),
           ],
-        ),
+        )
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
@@ -371,4 +191,25 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
       ),
     );
   }
+
+  String _emptyMessage(ReservationsFilter filter) {
+    switch (filter) {
+      case ReservationsFilter.all:
+        return 'Aucune réservation';
+
+      case ReservationsFilter.pending:
+        return 'Aucune réservation en attente';
+
+      case ReservationsFilter.confirmed:
+        return 'Aucune réservation confirmée';
+
+      case ReservationsFilter.completed:
+        return 'Aucune réservation terminée';
+
+      case ReservationsFilter.cancelled:
+        return 'Aucune réservation annulée';
+    }
+  }
+
+
 }

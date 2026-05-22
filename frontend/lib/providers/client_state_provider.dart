@@ -20,13 +20,37 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
       throw "Utilisateur non connecté";
     }
 
-    return await ClientState.getClientState();
+    return await ClientState.getClientState(reservationsFilter: ReservationsFilter.pending);
+  }
+
+  void setReservationsFilter(ReservationsFilter filter) {
+    final currentState = state.value;
+
+    if (currentState == null) return;
+
+    state = AsyncData(
+      currentState.copyWith(reservationsFilter: filter),
+    );
   }
 
   @override
-  Future<void> refresh() {
-    // TODO: implement refresh
-    throw UnimplementedError();
-  }
+  Future<void> refresh() async {
+    final currentFilter =
+        state.value?.reservationsFilter ??
+            ReservationsFilter.pending;
 
+    state = const AsyncLoading();
+    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final clientState = await ClientState.getClientState(
+        reservationsFilter: currentFilter,
+      );
+
+      state = AsyncData(clientState);
+
+    } catch (e, stack) {
+
+      state = AsyncError(e, stack);
+    }
+  }
 }
