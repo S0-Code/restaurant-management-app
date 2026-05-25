@@ -26,6 +26,13 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         error: err,
         stackTrace: StackTrace.current,
         notifier: clientStateNotifier,
+        onGoToLogin: () async {
+          ref.read(securityProvider.notifier).logout();
+
+          if (!context.mounted) return;
+
+          Navigator.pushReplacementNamed(context, '/login');
+        },
       ),
       loading: () => data(
         context,

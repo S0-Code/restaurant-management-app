@@ -23,8 +23,7 @@ class Reservation {
 
   static Future<List<Reservation>> getReservations() async {
     final response = await ApiClient.get("get_reservations");
-    print(response.statusCode);
-    print(response.body);
+
     if (response.statusCode == 200) {
 
       final List<dynamic> body = json.decode(response.body);
