@@ -14,13 +14,13 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
   Future<ClientState> build() async {
     ref.watch(securityProvider);
 
-    final security = ref.read(securityProvider.notifier);
-
-    if (!security.isLoggedIn) {
-      throw "Utilisateur non connecté";
+    try {
+      return await ClientState.getClientState(
+        reservationsFilter: ReservationsFilter.pending,
+      );
+    } catch (e) {
+      throw "Something went wrong!\nPlease try again later.";
     }
-
-    return await ClientState.getClientState(reservationsFilter: ReservationsFilter.pending);
   }
 
   void setReservationsFilter(ReservationsFilter filter) {

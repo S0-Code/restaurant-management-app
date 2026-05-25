@@ -5,11 +5,14 @@ class DataErrorWidget extends StatelessWidget {
   final Object error;
   final StackTrace? stackTrace;
   final AbstractAsyncNotifier notifier;
+  final VoidCallback? onGoToLogin;
+
 
   const DataErrorWidget({
     required this.error,
     this.stackTrace,
     required this.notifier,
+    this.onGoToLogin,
   });
 
   @override
@@ -21,18 +24,26 @@ class DataErrorWidget extends StatelessWidget {
           Text(
             error.toString(),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.red,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
+
           ElevatedButton(
             onPressed: () {
               notifier.refresh();
             },
-            child: Text('Retry'),
+            child: const Text('Retry'),
+          ),
+
+          const SizedBox(height: 10),
+
+          ElevatedButton(
+            onPressed: onGoToLogin,
+            child: const Text('Go to login'),
           ),
         ],
       ),

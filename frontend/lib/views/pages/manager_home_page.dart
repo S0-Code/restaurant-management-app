@@ -75,6 +75,13 @@ class _ManagerHomePageState extends ConsumerState<ManagerHomePage> {
             error: err,
             stackTrace: StackTrace.current,
             notifier: managerStateNotifier,
+            onGoToLogin: () async {
+              ref.read(securityProvider.notifier).logout();
+
+              if (!context.mounted) return;
+
+              Navigator.pushReplacementNamed(context, '/login');
+            },
           ),
           data: (state) {
             final restaurants = state.sortedRestaurants;
