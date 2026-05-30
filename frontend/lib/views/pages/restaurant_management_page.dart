@@ -150,16 +150,12 @@ class _RestaurantManagementPageState extends ConsumerState<RestaurantManagementP
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
                     child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ReservationDetailsManagerPage(
-                              reservation: res,
-                            ),
-                          ),
-                        );
-                      },
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ReservationDetailsManagerPage(reservation: res)),
+                          );
+                        },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
