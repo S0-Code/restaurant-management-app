@@ -10,11 +10,15 @@ begin
     return query
         select
             r.id,
+            r.client,
             rest.name,
+            rest.address,
             rest.city,
+            rest.phone,
             r.datetime,
             r.number_of_guests,
-            r.status
+            r.status,
+            r.special_requests
         from reservations r
                  join restaurants rest on rest.id = r.restaurant
         where r.client = auth.id()

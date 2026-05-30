@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:prbd_2526_c05/providers/security_provider.dart';
-import 'package:prbd_2526_c05/views/pages/login_page.dart';
 import 'package:prbd_2526_c05/views/pages/client_home_page.dart';
+import 'package:prbd_2526_c05/views/pages/client_view_reservation.dart';
+import 'package:prbd_2526_c05/views/pages/login_page.dart';
 import 'package:prbd_2526_c05/views/pages/signup_page.dart';
 
 import '../views/pages/manager_home_page.dart';
@@ -25,6 +26,7 @@ class MyApp extends ConsumerWidget {
         '/clientHome': (context) => ClientHomePage(),
         '/managerHome': (context) => ManagerHomePage(),
         '/signup': (context) => SignupPage(),
+        '/clientViewReservation': (context) => ClientViewReservation(),
       },
     );
   }

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:prbd_2526_c05/providers/client_state.dart';
 import 'package:prbd_2526_c05/providers/client_state_provider.dart';
+import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
+import 'package:prbd_2526_c05/providers/simulated_time_provider.dart';
 import '../../models/reservation.dart';
 import '../../providers/security_provider.dart';
 import '../widgets/data_error_widget.dart';
 import '../widgets/reservation_card.dart';
+import '../widgets/simulated_time_dialog.dart';
 
 
 class ClientHomePage extends ConsumerStatefulWidget {
@@ -16,12 +20,18 @@ class ClientHomePage extends ConsumerStatefulWidget {
 class _ClientHomePageState extends ConsumerState<ClientHomePage> {
   @override
   Widget build(BuildContext context) {
+    final referenceTime = ref.read(referenceTimeProvider);
     final asyncClientState = ref.watch(clientStateProvider);
     final clientStateNotifier = ref.read(clientStateProvider.notifier);
-
+    final simulatedTimeNotifier = ref.read(simulatedTimeProvider.notifier);
 
     return asyncClientState.when(
-      data: (clientState) => data(context, clientState, clientStateNotifier),
+      data: (clientState) => data(
+          context,
+          clientState,
+          clientStateNotifier,
+          referenceTime,
+      ),
       error: (err, _) => DataErrorWidget(
         error: err,
         stackTrace: StackTrace.current,
@@ -38,6 +48,7 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         context,
         asyncClientState.value ?? ClientState(reservations: []),
         clientStateNotifier,
+        referenceTime,
         isLoading: true,
       ),
     );
@@ -46,13 +57,19 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
   Widget data(
       BuildContext context,
       ClientState clientState,
-      ClientStateNotifier notifier, {
+      ClientStateNotifier clientStateNotifier,
+      DateTime referenceTime,
+      {
         isLoading = false
       }
       ) {
     final securityNotifier = ref.read(securityProvider.notifier);
     final theme = Theme.of(context);
     final reservations = clientState.filteredReservations;
+    final formattedDate =
+    DateFormat('EEE dd/MM/yyyy', 'fr_FR').format(referenceTime);
+
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes réservations'),
@@ -66,7 +83,7 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
             icon: const Icon(Icons.refresh),
             tooltip: 'Rafraîchir les données',
             onPressed: () {
-              notifier.refresh();
+              clientStateNotifier.refresh();
             },
           ),
           IconButton(
@@ -89,12 +106,23 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
               padding: const EdgeInsets.only(top: 2.0),
               child: Tooltip(
                 message: 'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
-                child: Text(
-                  'mercredi 04/12/2024 16:00',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.normal,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) => SimulatedTimeDialog(
+                            referenceTime: referenceTime
+                        )
+                    );
+
+                  },
+                  child: Text(
+                    DateFormat('EEE dd/MM/yyyy HH:mm', 'fr_FR').format(referenceTime),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
               ),
@@ -140,9 +168,8 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
                     ],
                     selected: {clientState.reservationsFilter},
                     onSelectionChanged: (selection) {
-                      setState(() {
-                        notifier.setReservationsFilter(selection.first);
-                      });
+                        clientStateNotifier.setReservationsFilter(selection.first);
+
                     },
                   ),
                 ),
