@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/restaurant.dart';
+import '../pages/restaurant_management_page.dart';
 
 class RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
@@ -78,7 +79,14 @@ class RestaurantCard extends StatelessWidget {
           ],
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RestaurantManagementPage(restaurant: restaurant),
+            ),
+          );
+        },
       ),
     );
   }

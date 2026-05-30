@@ -20,6 +20,7 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
     final currentFilter =
         state.value?.reservationsFilter ?? ReservationsFilter.pending;
 
+
     final currentReservation = state.value?.currentReservation;
     try {
       return await ClientState.getClientState(

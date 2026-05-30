@@ -1,0 +1,402 @@
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../models/manager_reservation.dart';
+import '../../models/reservation.dart';
+import '../../providers/manager_reservations_provider.dart';
+
+class ReservationDetailsManagerPage extends ConsumerWidget {
+  final ManagerReservation reservation;
+
+  const ReservationDetailsManagerPage({super.key, required this.reservation});
+
+  Future<void> _handleStatusAction(
+    BuildContext context,
+    WidgetRef ref,
+    String newStatus,
+    String title,
+    String content,
+  ) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Non'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Oui'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ManagerReservation.updateStatus(reservation.id, newStatus);
+        ref.invalidate(managerReservationsProvider(reservation.restaurantId));
+        if (context.mounted)
+          Navigator.pop(context);
+      } catch (e) {
+        if (context.mounted)
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final simulatedTime = DateTime(2024, 12, 4, 16, 0);
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Détails de la réservation'),
+        automaticallyImplyLeading: false,
+        elevation: 2,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        surfaceTintColor: Colors.transparent,
+        flexibleSpace: Align(
+          alignment: Alignment.topCenter,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: Tooltip(
+                message:
+                    'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
+                child: Text(
+                  DateFormat(
+                    'EEEE dd/MM/yyyy HH:mm',
+                    'fr_FR',
+                  ).format(simulatedTime),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Informations client',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.person, size: 20),
+                          const SizedBox(width: 8),
+                          Text('Nom: ${reservation.clientName}'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.email, size: 20),
+                          const SizedBox(width: 8),
+                          Text('Email: ${reservation.clientEmail}'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.phone, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Téléphone: ${reservation.clientPhone ?? "Non renseigné"}',
+                            style: TextStyle(
+                              color: reservation.clientPhone == null
+                                  ? Colors.grey[600]
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Détails de la réservation',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.restaurant, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              reservation.restaurantName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Date: ${DateFormat('EEE dd/MM/yyyy', 'fr_FR').format(reservation.dateTime)}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Heure: ${DateFormat('HH:mm').format(reservation.dateTime)}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.people, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Nombre de convives: ${reservation.numberOfGuests}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.info, size: 20),
+                          const SizedBox(width: 8),
+                          const Text('Statut: '),
+                          _buildStatusChip(reservation.status.name),
+                        ],
+                      ),
+                      // Affichage conditionnel des demandes spéciales
+                      if (reservation.specialRequests != null &&
+                          reservation.specialRequests!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Demandes spéciales',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          reservation.specialRequests!,
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Tables assignées',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              if (reservation.assignedTables.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "Aucune table assignée (en attente de confirmation)",
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ),
+                )
+              else
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: reservation.assignedTables.map((table) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.table_restaurant, size: 20),
+                              const SizedBox(width: 8),
+                              Text('Table ${table.tableNumber}'),
+                              const SizedBox(width: 16),
+                              Text(
+                                '(${table.capacity} places)',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              const SizedBox(height: 24),
+
+              // Boutons d'actions conditionnels selon le statut
+              if (reservation.status == Status.pending) ...[
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Navigation vers la vue d'assignation des tables
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Assignation de tables à venir'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.table_restaurant),
+                  label: const Text('Confirmer et assigner tables'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _handleStatusAction(
+                    context,
+                    ref,
+                    'cancelled',
+                    'Annuler la réservation',
+                    'Êtes-vous sûr de vouloir annuler cette réservation ?',
+                  ),
+                  icon: const Icon(Icons.cancel),
+                  label: const Text('Annuler'),
+                ),
+              ] else if (reservation.status == Status.confirmed) ...[
+                // Vérification du temps : est-ce que simulatedTime est AVANT la réservation ?
+                if (simulatedTime.isBefore(reservation.dateTime)) ...[
+                  ElevatedButton.icon(
+                    onPressed: null,
+                    // null désactive visuellement le bouton (le grise)
+                    icon: const Icon(Icons.check_circle),
+                    label: const Text('Marquer comme terminée'),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'La réservation ne peut être terminée que durant son service ou après celui-ci',
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ] else ...[
+                  // Si le temps est passé ou actuel, le bouton est actif
+                  ElevatedButton.icon(
+                    onPressed: () => _handleStatusAction(
+                      context,
+                      ref,
+                      'completed',
+                      'Terminer la réservation',
+                      'Marquer cette réservation comme terminée ?',
+                    ),
+                    icon: const Icon(Icons.check_circle),
+                    label: const Text('Marquer comme terminée'),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _handleStatusAction(
+                    context,
+                    ref,
+                    'cancelled',
+                    'Annuler la réservation',
+                    'Êtes-vous sûr de vouloir annuler cette réservation ?',
+                  ),
+                  icon: const Icon(Icons.cancel),
+                  label: const Text('Annuler'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    Color bgColor;
+    String label;
+
+    switch (status) {
+      case 'pending':
+        bgColor = Colors.orange;
+        label = 'En attente';
+        break;
+      case 'confirmed':
+        bgColor = Colors.green;
+        label = 'Confirmée';
+        break;
+      case 'completed':
+        bgColor = Colors.blue;
+        label = 'Terminée';
+        break;
+      case 'cancelled':
+        bgColor = Colors.red;
+        label = 'Annulée';
+        break;
+      default:
+        bgColor = Colors.grey;
+        label = status;
+    }
+
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: Colors.white),
+      ),
+      backgroundColor: bgColor,
+      padding: EdgeInsets.zero,
+    );
+  }
+}
