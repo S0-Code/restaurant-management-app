@@ -1,14 +1,14 @@
-import '../models/restaurant.dart';
+import '../models/restaurant_detail.dart';
 import '../core/services/api_client.dart';
 import 'dart:convert';
 
 class ManagerState {
-  final List<Restaurant> restaurants;
+  final List<RestaurantDetail> restaurants;
 
   ManagerState({required this.restaurants});
 
-  List<Restaurant> get sortedRestaurants {
-    final sorted = List<Restaurant>.from(restaurants);
+  List<RestaurantDetail> get sortedRestaurants {
+    final sorted = List<RestaurantDetail>.from(restaurants);
     sorted.sort((a, b) {
       final dateA = a.lastReservationDate;
       final dateB = b.lastReservationDate;
@@ -31,7 +31,7 @@ class ManagerState {
     if (response.statusCode != 200) throw Exception("Erreur API: ${response.body}");
 
     final List<dynamic> body = json.decode(response.body);
-    final list = body.map((json) => Restaurant.fromJson(json)).toList();
+    final list = body.map((json) => RestaurantDetail.fromJson(json)).toList();
     return ManagerState(restaurants: list);
   }
 }

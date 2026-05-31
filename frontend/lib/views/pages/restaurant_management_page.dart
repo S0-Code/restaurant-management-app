@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
 
-import '../../models/restaurant.dart';
+import '../../models/restaurant_detail.dart';
 import '../../providers/manager_reservations_provider.dart';
 import '../widgets/data_error_widget.dart';
 
@@ -12,7 +12,7 @@ import '../widgets/simulated_time_dialog.dart';
 import 'reservation_details_manager_page.dart';
 
 class RestaurantManagementPage extends ConsumerStatefulWidget {
-  final Restaurant restaurant;
+  final RestaurantDetail restaurant;
   const RestaurantManagementPage({super.key, required this.restaurant});
 
   @override
