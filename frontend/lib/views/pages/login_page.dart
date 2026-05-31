@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
 
 import '../../core/tools/validating_text_editing_controller.dart';
 import '../../core/widgets/dialog_box.dart';
@@ -37,6 +38,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final securityState = ref.watch(securityProvider);
+    final referenceTime = ref.watch(referenceTimeProvider);
 
     return securityState.when(
         data: (token)  {
@@ -54,10 +56,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               );
             });
           }
-          return _loginForm(context);
+          return _loginForm(context, referenceTime);
         },
-        error: (error, _) => _loginForm(context),
-        loading: () => _loginForm(context, isLoading: true));
+        error: (error, _) => _loginForm(context, referenceTime),
+        loading: () => _loginForm(context, referenceTime, isLoading: true));
   }
 
   @override
@@ -67,9 +69,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _submitForm(BuildContext context) {
+  void _submitForm(BuildContext context, DateTime referenceTime) {
     if (!_validateForm()) return;
-    _login(context, _emailController.text, _passwordController.text);
+    _login(context, _emailController.text, _passwordController.text, referenceTime);
   }
 
 
@@ -117,7 +119,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   }
 
-  void _login(BuildContext context, String mail, String password) async {
+  void _login(BuildContext context, String mail, String password, DateTime referenceTime) async {
     await ref.read(securityProvider.notifier).login(mail, password);
 
     final securityState = ref.read(securityProvider);
@@ -141,13 +143,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         );
       },
-      loading: () => _loginForm(context, isLoading : true),
+      loading: () => _loginForm(context, referenceTime, isLoading : true),
     );
   }
 
-  Widget _loginForm(BuildContext context, {isLoading = false}) {
+  Widget _loginForm(BuildContext context, DateTime referenceTime, {isLoading = false}) {
     final theme = Theme.of(context);
-    final simulatedTime = DateTime(2024, 12, 4, 16, 0);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Connexion'),
@@ -173,7 +174,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
                 child: Text(
                   DateFormat('EEEE dd/MM/yyyy HH:mm', 'fr_FR')
-                      .format(simulatedTime),
+                      .format(referenceTime),
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey[400],
@@ -222,7 +223,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             autovalidateMode: AutovalidateMode
                                 .onUserInteraction,
                             controller: _emailController,
-                            onFieldSubmitted: (_) => _submitForm(context),
+                            onFieldSubmitted: (_) => _submitForm(context, referenceTime),
                             decoration: InputDecoration(
                               labelText: 'Email',
                               border: OutlineInputBorder(),
@@ -236,7 +237,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             autovalidateMode: AutovalidateMode
                                 .onUserInteraction,
                             controller: _passwordController,
-                            onFieldSubmitted: (_) => _submitForm(context),
+                            onFieldSubmitted: (_) => _submitForm(context, referenceTime),
                             decoration: InputDecoration(
                               labelText: 'Mot de passe',
                               border: OutlineInputBorder(),
@@ -247,7 +248,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () => _submitForm(context),
+                            onPressed: () => _submitForm(context, referenceTime),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
@@ -295,7 +296,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 _login(
-                                    context, 'brlacroix@epfc.eu', 'Password1,');
+                                    context, 'brlacroix@epfc.eu', 'Password1,', referenceTime);
                               },
                               icon: const Icon(Icons.person),
                               label: const Text('Client (Bruno)'),
@@ -310,7 +311,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 _login(
-                                    context, 'mamichel@epfc.eu', 'Password1,');
+                                    context, 'mamichel@epfc.eu', 'Password1,', referenceTime);
                               },
                               icon: const Icon(Icons.person),
                               label: const Text('Client (Marc)'),
@@ -329,7 +330,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 _login(
-                                    context, 'bepenelle@epfc.eu', 'Password1,');
+                                    context, 'bepenelle@epfc.eu', 'Password1,', referenceTime);
                               },
                               icon: const Icon(Icons.manage_accounts),
                               label: const Text('Manager (Benoît)'),
@@ -344,7 +345,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 _login(
-                                    context, 'gedielman@epfc.eu', 'Password1,');
+                                    context, 'gedielman@epfc.eu', 'Password1,', referenceTime);
                               },
                               icon: const Icon(Icons.manage_accounts),
                               label: const Text('Manager (Geoffrey)'),

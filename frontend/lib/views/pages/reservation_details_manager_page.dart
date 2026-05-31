@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
 
 import '../../models/manager_reservation.dart';
 import '../../models/reservation.dart';
 import '../../providers/manager_reservations_provider.dart';
+import '../widgets/simulated_time_dialog.dart';
 
 class ReservationDetailsManagerPage extends ConsumerWidget {
   final ManagerReservation reservation;
@@ -55,6 +57,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final simulatedTime = DateTime(2024, 12, 4, 16, 0);
+    final referenceTime = ref.watch(referenceTimeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -76,15 +79,23 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
               child: Tooltip(
                 message:
                     'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
-                child: Text(
-                  DateFormat(
-                    'EEEE dd/MM/yyyy HH:mm',
-                    'fr_FR',
-                  ).format(simulatedTime),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.normal,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) => SimulatedTimeDialog(
+                            referenceTime: referenceTime
+                        )
+                    );
+
+                  },
+                  child: Text(
+                    DateFormat('EEE dd/MM/yyyy HH:mm', 'fr_FR').format(referenceTime),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
               ),

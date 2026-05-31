@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
 
 import '../../providers/manager_state_provider.dart';
 import '../../providers/security_provider.dart';
 import '../widgets/data_error_widget.dart';
 import '../widgets/restaurant_card.dart';
+import '../widgets/simulated_time_dialog.dart';
 
 class ManagerHomePage extends ConsumerStatefulWidget {
   const ManagerHomePage({super.key});
@@ -21,6 +23,7 @@ class _ManagerHomePageState extends ConsumerState<ManagerHomePage> {
     final asyncManagerState = ref.watch(managerStateProvider);
     final managerStateNotifier = ref.read(managerStateProvider.notifier);
     final securityNotifier = ref.read(securityProvider.notifier);
+    final referenceTime = ref.watch(referenceTimeProvider);
 
     final theme = Theme.of(context);
     final simulatedTime = DateTime(2024, 12, 4, 16, 0);
@@ -55,12 +58,23 @@ class _ManagerHomePageState extends ConsumerState<ManagerHomePage> {
               padding: const EdgeInsets.only(top: 2.0),
               child: Tooltip(
                 message: 'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
-                child: Text(
-                  DateFormat('EEEE dd/MM/yyyy HH:mm', 'fr_FR').format(simulatedTime),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.normal,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) => SimulatedTimeDialog(
+                            referenceTime: referenceTime
+                        )
+                    );
+
+                  },
+                  child: Text(
+                    DateFormat('EEE dd/MM/yyyy HH:mm', 'fr_FR').format(referenceTime),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
               ),
