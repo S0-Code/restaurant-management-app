@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/restaurant.dart';
+import '../../models/restaurant_detail.dart';
 import '../pages/restaurant_management_page.dart';
 
 class RestaurantCard extends StatelessWidget {
-  final Restaurant restaurant;
+  final RestaurantDetail restaurant;
   final DateTime simulatedTime;
 
   const RestaurantCard({

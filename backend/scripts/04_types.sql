@@ -11,3 +11,24 @@ create type client_reservation as (
                                       special_requests text
                                   );
 
+drop type if exists restaurant_detail cascade;
+
+create type restaurant_detail as (
+                                     id integer,
+                                     name varchar(256),
+                                     city varchar(256),
+                                     address varchar(512),
+                                     phone varchar(50),
+                                     rating double precision,
+                                     price_range integer,
+                                     last_reservation_date timestamp,
+                                     pending_requests_count integer,
+                                     description text
+                                 );
+
+create type service_info as (
+    day_of_week integer,
+    start_time time,
+    end_time time
+                            );
+
