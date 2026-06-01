@@ -69,3 +69,61 @@ create trigger trg_prevent_client_of_reservation_update
 execute function prevent_column_update('client');
 
 
+
+/*On pne peut pas modifier la clé primaire d'une table*/
+
+drop trigger if exists trg_prevent_user_id_update on users;
+create trigger trg_prevent_user_id_update
+    before update of id on users
+    for each row
+execute function prevent_column_update('id');
+
+drop trigger if exists trg_prevent_restaurant_id_update on restaurants;
+create trigger trg_prevent_restaurant_id_update
+    before update of id on restaurants
+    for each row
+execute function prevent_column_update('id');
+
+drop trigger if exists trg_prevent_table_id_update on tables;
+create trigger trg_prevent_table_id_update
+    before update of id on tables
+    for each row
+execute function prevent_column_update('id');
+
+drop trigger if exists trg_prevent_service_id_update on services;
+create trigger trg_prevent_service_id_update
+    before update of id on services
+    for each row
+execute function prevent_column_update('id');
+
+drop trigger if exists trg_prevent_reservation_id_update on reservations;
+create trigger trg_prevent_reservation_id_update
+    before update of id on reservations
+    for each row
+execute function prevent_column_update('id');
+
+drop trigger if exists trg_prevent_restaurant_managers_restaurant_update on restaurant_managers;
+create trigger trg_prevent_restaurant_managers_restaurant_update
+    before update of restaurant on restaurant_managers
+    for each row
+execute function prevent_column_update('restaurant');
+
+drop trigger if exists trg_prevent_restaurant_managers_manager_update on restaurant_managers;
+create trigger trg_prevent_restaurant_managers_manager_update
+    before update of manager on restaurant_managers
+    for each row
+execute function prevent_column_update('manager');
+
+drop trigger if exists trg_prevent_reservation_tables_reservation_update on reservation_tables;
+create trigger trg_prevent_reservation_tables_reservation_update
+    before update of reservation on reservation_tables
+    for each row
+execute function prevent_column_update('reservation');
+
+drop trigger if exists trg_prevent_reservation_tables_table_update on reservation_tables;
+create trigger trg_prevent_reservation_tables_table_update
+    before update of "table" on reservation_tables
+    for each row
+execute function prevent_column_update('table');
+
+
