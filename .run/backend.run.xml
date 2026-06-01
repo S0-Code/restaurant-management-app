@@ -31,6 +31,7 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_12_pending_cancelled_no_table.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_13_client_duplicate_reservation.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_14_reservations_in_the_past.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.05_ep_manager_tables.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
     <method v="2" />

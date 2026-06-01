@@ -7,6 +7,7 @@ import '../../models/manager_reservation.dart';
 import '../../models/reservation.dart';
 import '../../providers/manager_reservations_provider.dart';
 import '../widgets/simulated_time_dialog.dart';
+import 'assign_tables_page.dart';
 
 class ReservationDetailsManagerPage extends ConsumerWidget {
   final ManagerReservation reservation;
@@ -301,10 +302,10 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
               if (reservation.status == Status.pending) ...[
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Navigation vers la vue d'assignation des tables
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Assignation de tables à venir'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AssignTablesPage(reservation: reservation),
                       ),
                     );
                   },
