@@ -23,6 +23,8 @@
     <script-file value="$PROJECT_DIR$/backend/tests/test_BR_07_service_overlap.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_BR_08_service_slot_alignment.sql" />
     <script-file value="$PROJECT_DIR$/backend/tests/test_BR_10_restaurant_manager.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_12_pending_cancelled_no_table.sql" />
+    <script-file value="$PROJECT_DIR$/backend/tests/test_BR_13_client_duplicate_reservation.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />
     <method v="2" />
