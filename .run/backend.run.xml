@@ -3,7 +3,14 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/01_init.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/02_security.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/03_tables_and_data.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/04_types.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/05_user_constraints.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.01_ep_users.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.02_ep_reservations.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.02_ep_restaurants.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.03_ep_manager_reservations.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.03_ep_time.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/05.04_ep_manager_actions.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/06_restaurants_constraints.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/07_check_immutable_columns.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/08_reservations_constraints.sql" />
@@ -22,6 +29,7 @@
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_10_restaurant_manager.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_11_reservation_final_status.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_12_pending_cancelled_no_table.sql" />
+    <script-file value="$PROJECT_DIR$/backend/scripts/BR_13_client_duplicate_reservation.sql" />
     <script-file value="$PROJECT_DIR$/backend/scripts/BR_14_reservations_in_the_past.sql" />
     <script-mode>FILE</script-mode>
     <data-source id="6d275bb5-c69c-4f95-bc29-f6a29631655b" namespace="database/&quot;prbd-2526-c05&quot;" />

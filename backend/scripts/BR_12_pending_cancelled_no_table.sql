@@ -21,63 +21,59 @@ Tables concernées :
 create or replace function check_reservation_tables_status()
     returns trigger as $$
 declare
-    v_status reservations.status%TYPE;
+    v_status text;
 begin
-    -- On récupère le statut de la réservation
-    select status into v_status
-    from reservations
-    where id = new.reservation;
+    -- On récupère le statut actuel de la réservation parente
+    select status::text into v_status from reservations where id = new.reservation;
 
     -- Si le statut interdit les tables, on bloque
     if v_status in ('pending', 'cancelled') then
-        raise exception 'Une réservation en attente ou annulée ne peut pas être associée à une table.';
+        raise exception 'BR-12 : Une réservation en attente ou annulée ne peut pas être associée à une table.';
     end if;
 
-    return new;
+    return null;
 end;
 $$ language plpgsql;
 
 
--- 2. Fonction pour contrôler la mise à jour du statut sur reservations
+-- 2. Contrôle lors du changement de statut de la réservation elle-même
 create or replace function check_reservations_status_update()
     returns trigger as $$
 declare
     v_table_count int;
 begin
-    -- On ne vérifie que si le nouveau statut est 'pending' ou 'cancelled'
-    if new.status in ('pending', 'cancelled') then
-        -- On compte combien de tables sont associées à cette réservation
-        select count(*) into v_table_count
-        from reservation_tables
-        where reservation = new.id;
+    -- Si on tente de passer vers un statut qui interdit les tables
+    if new.status::text in ('pending', 'cancelled') then
+        -- On vérifie s'il existe déjà des tables associées
+        select count(*) into v_table_count from reservation_tables where reservation = new.id;
 
         -- S'il y a des tables, on bloque le changement de statut
         if v_table_count > 0 then
-            raise exception 'Impossible de passer la réservation en % car elle est déjà associée à des tables.', new.status;
+            raise exception 'BR-12 : Impossible de passer la réservation en % car elle est associée à des tables.', new.status;
         end if;
     end if;
 
-    return new;
+    return null;
 end;
 $$ language plpgsql;
 
 
 /* -------------------------------------------------------------------------
-   TRIGGERS
+   TRIGGERS DIFFÉRÉS (DEFERRABLE) POUR ÉVITER L'EFFET DOMINO
    ------------------------------------------------------------------------- */
 
 -- Trigger sur reservation_tables
 drop trigger if exists trg_br12_reservation_tables_status on reservation_tables;
-create trigger trg_br12_reservation_tables_status
-    before insert or update on reservation_tables
+create constraint trigger trg_br12_reservation_tables_status
+    after insert or update on reservation_tables
+    deferrable initially deferred
     for each row
-execute function check_reservation_tables_status();
+execute procedure check_reservation_tables_status();
 
 -- Trigger sur reservations (uniquement sur le UPDATE de la colonne status)
 drop trigger if exists trg_br12_reservations_status_update on reservations;
-create trigger trg_br12_reservations_status_update
-    before update of status on reservations
+create constraint trigger trg_br12_reservations_status_update
+    after update of status on reservations
+    deferrable initially deferred
     for each row
-    -- On ne lance le trigger que si le statut change réellement vers une valeur interdite
-    when (new.status in ('pending', 'cancelled') and old.status not in ('pending', 'cancelled'))
-execute function check_reservations_status_update();
+execute procedure check_reservations_status_update();

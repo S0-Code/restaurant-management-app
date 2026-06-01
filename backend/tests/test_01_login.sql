@@ -16,6 +16,8 @@ $test$
 $test$;
 rollback;
 
+
+
 -- 2. Cas d'email inexistant : on utilise should_fail pour vérifier
 -- que la fonction login échoue bien (lève une exception) quand
 -- l'email n'est pas connu.
