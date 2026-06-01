@@ -57,12 +57,12 @@ execute function enforce_initial_reservation_status();
 create or replace function check_reservation_lifecycle()
     returns trigger as $$
 begin
-    -- Si le statut n'a pas changé, on laisse passer.
+    -- Si le statut n'a pas été modifié, on laisse passer
     if old.status = new.status then
         return new;
     end if;
 
-    -- Une réservation annulée ou terminée ne peut plus changer de statut.
+    -- Une réservation annulée ou terminée ne peut plus changer de statut
     if old.status in ('cancelled'::status_type, 'completed'::status_type) then
         raise exception 'BR-09 : Une réservation annulée ou terminée ne peut plus changer de statut.';
     end if;
@@ -82,6 +82,12 @@ begin
     -- confirmed -> completed
     if old.status = 'confirmed'::status_type
         and new.status = 'completed'::status_type then
+        return new;
+    end if;
+
+    -- confirmed -> cancelled
+    if old.status = 'confirmed'::status_type
+        and new.status = 'cancelled'::status_type then
         return new;
     end if;
 
