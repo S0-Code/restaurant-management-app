@@ -50,8 +50,18 @@ begin
 end;
 $$ language plpgsql security definer;
 
+drop trigger if exists trigger_reservation_time_within_service on reservations;
+
 create trigger trigger_reservation_time_within_service
     after insert or update of datetime, status
     on reservations
     for each row
+execute function check_reservation_time_within_service();
+
+drop trigger if exists trigger_reservation_time_within_service_on_services on services;
+
+create trigger trigger_reservation_time_within_service_on_services
+    after update of day_of_week, start_time, end_time or delete
+    on services
+    for each statement
 execute function check_reservation_time_within_service();
