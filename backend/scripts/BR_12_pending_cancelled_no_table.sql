@@ -35,8 +35,18 @@ begin
 end;
 $$ language plpgsql;
 
+-- 2. Nettoyage automatique des tables
+create or replace function auto_release_tables_on_status_change()
+    returns trigger as $$
+begin
+    if new.status::text in ('pending', 'cancelled') and old.status::text not in ('pending', 'cancelled') then
+        delete from reservation_tables where reservation = new.id;
+    end if;
+    return new;
+end;
+$$ language plpgsql;
 
--- 2. Contrôle lors du changement de statut de la réservation elle-même
+-- 3. Contrôle de sécurité final
 create or replace function check_reservations_status_update()
     returns trigger as $$
 declare
@@ -59,8 +69,14 @@ $$ language plpgsql;
 
 
 /* -------------------------------------------------------------------------
-   TRIGGERS DIFFÉRÉS (DEFERRABLE) POUR ÉVITER L'EFFET DOMINO
+   TRIGGERS
    ------------------------------------------------------------------------- */
+-- Le nettoyage avant que les problèmes n'arrivent
+drop trigger if exists trg_auto_release_tables on reservations;
+create trigger trg_auto_release_tables
+    before update of status on reservations
+    for each row
+execute procedure auto_release_tables_on_status_change();
 
 -- Trigger sur reservation_tables
 drop trigger if exists trg_br12_reservation_tables_status on reservation_tables;
