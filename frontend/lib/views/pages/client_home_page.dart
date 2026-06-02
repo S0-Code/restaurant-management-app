@@ -77,7 +77,9 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/clientSearchRestaurants');
+            },
           ),
           IconButton(
             icon: const Icon(Icons.refresh),

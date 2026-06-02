@@ -16,24 +16,34 @@ Tables concernées :
     -update : oui si on change l'heure
     -delete : non
 */
-set search_path to public;
+select r.id, r.datetime, r.status, extract(isodow from r.datetime) as day
+from reservations r
+where r.status in ('pending'::status_type, 'completed'::status_type, 'confirmed'::status_type)
+  and not exists (
+    select 1
+    from services s
+    where s.restaurant = r.restaurant
+      and s.day_of_week = extract(isodow from r.datetime)
+      and r.datetime::time between s.start_time and s.end_time
+);
 
 create or replace function check_reservation_time_within_service()
     returns trigger as
 $$
 begin
-    -- On vérifie UNIQUEMENT la nouvelle ligne (new) pour ne pas crasher à cause des autres
-    if new.status in ('pending'::status_type, 'completed'::status_type, 'confirmed'::status_type) then
-        if not exists (
-            select 1
-            from services s
-            where s.restaurant = new.restaurant
-              and s.day_of_week = extract(isodow from new.datetime)::int
-              and new.datetime::time >= s.start_time
-              and new.datetime::time < s.end_time
-        ) then
-            raise exception 'Les réservations ''pending'' ''confirmed'' et ''completed'' doivent avoir lieu durant un service existant dans ce restaurant pour le jour de la réservation';
-        end if;
+    if exists(select r.id, r.datetime, r.status, extract(isodow from r.datetime) as day
+              from reservations r
+              where r.status in ('pending'::status_type, 'completed'::status_type, 'confirmed'::status_type)
+                and not exists (
+                  select 1
+                  from services s
+                  where s.restaurant = r.restaurant
+                    and s.day_of_week = extract(isodow from r.datetime)
+                    and r.datetime::time >= s.start_time
+                    and r.datetime::time < s.end_time
+              ))
+    then
+        raise exception 'Les réservations ''pending'' ''confirmed'' et ''completed'' doivent avoir lieu durant un service existant dans ce restaurant pour le jour de la réservation';
     end if;
 
     return null;
@@ -41,8 +51,17 @@ end;
 $$ language plpgsql security definer;
 
 drop trigger if exists trigger_reservation_time_within_service on reservations;
+
 create trigger trigger_reservation_time_within_service
     after insert or update of datetime, status
     on reservations
     for each row
+execute function check_reservation_time_within_service();
+
+drop trigger if exists trigger_reservation_time_within_service_on_services on services;
+
+create trigger trigger_reservation_time_within_service_on_services
+    after update of day_of_week, start_time, end_time or delete
+    on services
+    for each statement
 execute function check_reservation_time_within_service();
