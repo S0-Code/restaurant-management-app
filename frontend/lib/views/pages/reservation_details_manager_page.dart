@@ -8,19 +8,34 @@ import '../../models/reservation.dart';
 import '../../providers/manager_reservations_provider.dart';
 import '../widgets/simulated_time_dialog.dart';
 import 'assign_tables_page.dart';
+import '../../providers/my_restaurants_provider.dart';
 
-class ReservationDetailsManagerPage extends ConsumerWidget {
+class ReservationDetailsManagerPage extends ConsumerStatefulWidget {
   final ManagerReservation reservation;
 
   const ReservationDetailsManagerPage({super.key, required this.reservation});
 
+  @override
+  ConsumerState<ReservationDetailsManagerPage> createState() => _ReservationDetailsManagerPageState();
+}
+
+class _ReservationDetailsManagerPageState extends ConsumerState<ReservationDetailsManagerPage> {
+  // 1. Notre état local qui peut être modifié
+  late ManagerReservation _reservation;
+
+  @override
+  void initState() {
+    super.initState();
+    // On initialise l'état avec la réservation passée en paramètre
+    _reservation = widget.reservation;
+  }
+
   Future<void> _handleStatusAction(
-    BuildContext context,
-    WidgetRef ref,
-    String newStatus,
-    String title,
-    String content,
-  ) async {
+      BuildContext context,
+      String newStatus,
+      String title,
+      String content,
+      ) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -41,23 +56,47 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
 
     if (confirm == true) {
       try {
-        await ManagerReservation.updateStatus(reservation.id, newStatus);
-        ref.invalidate(managerReservationsProvider(reservation.restaurantId));
-        if (context.mounted)
-          Navigator.pop(context);
+        await ManagerReservation.updateStatus(_reservation.id, newStatus);
+
+        // Rafraîchir les données en arrière-plan pour les autres écrans
+        ref.invalidate(managerReservationsProvider(_reservation.restaurantId));
+
+        // rafraîchir les compteurs de la page d'accueil
+        ref.invalidate(myRestaurantsProvider);
+
+        // 2. Mettre à jour l'écran actuel en direct
+        setState(() {
+          _reservation = _reservation.copyWith(
+            status: Status.values.firstWhere((e) => e.name == newStatus),
+            // Si on annule, on vide visuellement les tables (comme le fait le backend)
+            assignedTables: newStatus == 'cancelled' ? [] : _reservation.assignedTables,
+          );
+        });
+
+        // 3. Afficher le feedback sans quitter la page
+        if (context.mounted) {
+          final message = newStatus == 'cancelled'
+              ? 'Réservation annulée avec succès'
+              : 'Réservation mise à jour avec succès';
+
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: newStatus == 'cancelled' ? Colors.grey[900] : Colors.green,
+              )
+          );
+        }
       } catch (e) {
-        if (context.mounted)
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        }
       }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final simulatedTime = DateTime(2024, 12, 4, 16, 0);
     final referenceTime = ref.watch(referenceTimeProvider);
 
     return Scaffold(
@@ -78,15 +117,12 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 2.0),
               child: Tooltip(
-                message:
-                    'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
+                message: 'Date/heure simulée utilisée pour les tests.\nCliquez pour modifier.',
                 child: InkWell(
                   onTap: () {
                     showDialog(
                         context: context,
-                        builder: (_) => SimulatedTimeDialog(
-                            referenceTime: referenceTime
-                        )
+                        builder: (_) => SimulatedTimeDialog(referenceTime: referenceTime)
                     );
 
                   },
@@ -128,7 +164,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                         children: [
                           const Icon(Icons.person, size: 20),
                           const SizedBox(width: 8),
-                          Text('Nom: ${reservation.clientName}'),
+                          Text('Nom: ${_reservation.clientName}'),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -136,7 +172,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                         children: [
                           const Icon(Icons.email, size: 20),
                           const SizedBox(width: 8),
-                          Text('Email: ${reservation.clientEmail}'),
+                          Text('Email: ${_reservation.clientEmail}'),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -145,11 +181,9 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const Icon(Icons.phone, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Téléphone: ${reservation.clientPhone ?? "Non renseigné"}',
+                            'Téléphone: ${_reservation.clientPhone ?? "Non renseigné"}',
                             style: TextStyle(
-                              color: reservation.clientPhone == null
-                                  ? Colors.grey[600]
-                                  : null,
+                              color: _reservation.clientPhone == null ? Colors.grey[600] : null,
                             ),
                           ),
                         ],
@@ -179,7 +213,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              reservation.restaurantName,
+                              _reservation.restaurantName,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -196,7 +230,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const Icon(Icons.calendar_today, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Date: ${DateFormat('EEE dd/MM/yyyy', 'fr_FR').format(reservation.dateTime)}',
+                            'Date: ${DateFormat('EEE dd/MM/yyyy', 'fr_FR').format(_reservation.dateTime)}',
                           ),
                         ],
                       ),
@@ -206,7 +240,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const Icon(Icons.access_time, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Heure: ${DateFormat('HH:mm').format(reservation.dateTime)}',
+                            'Heure: ${DateFormat('HH:mm').format(_reservation.dateTime)}',
                           ),
                         ],
                       ),
@@ -216,7 +250,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const Icon(Icons.people, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Nombre de convives: ${reservation.numberOfGuests}',
+                            'Nombre de convives: ${_reservation.numberOfGuests}',
                           ),
                         ],
                       ),
@@ -226,12 +260,11 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                           const Icon(Icons.info, size: 20),
                           const SizedBox(width: 8),
                           const Text('Statut: '),
-                          _buildStatusChip(reservation.status.name),
+                          _buildStatusChip(_reservation.status.name),
                         ],
                       ),
-                      // Affichage conditionnel des demandes spéciales
-                      if (reservation.specialRequests != null &&
-                          reservation.specialRequests!.trim().isNotEmpty) ...[
+                      if (_reservation.specialRequests != null &&
+                          _reservation.specialRequests!.trim().isNotEmpty) ...[
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 8),
@@ -244,7 +277,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          reservation.specialRequests!,
+                          _reservation.specialRequests!,
                           style: TextStyle(color: Colors.grey[700]),
                         ),
                       ],
@@ -259,12 +292,14 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              if (reservation.assignedTables.isEmpty)
+              if (_reservation.assignedTables.isEmpty)
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      "Aucune table assignée (en attente de confirmation)",
+                      _reservation.status == Status.cancelled
+                          ? "Aucune table assignée"
+                          : "Aucune table assignée (en attente de confirmation)",
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ),
@@ -275,7 +310,7 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: reservation.assignedTables.map((table) {
+                      children: _reservation.assignedTables.map((table) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: Row(
@@ -299,13 +334,13 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // Boutons d'actions conditionnels selon le statut
-              if (reservation.status == Status.pending) ...[
+              if (_reservation.status == Status.pending) ...[
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AssignTablesPage(reservation: reservation),
+                        builder: (context) => AssignTablesPage(reservation: _reservation),
                       ),
                     );
                   },
@@ -316,7 +351,6 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                 OutlinedButton.icon(
                   onPressed: () => _handleStatusAction(
                     context,
-                    ref,
                     'cancelled',
                     'Annuler la réservation',
                     'Êtes-vous sûr de vouloir annuler cette réservation ?',
@@ -324,9 +358,9 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                   icon: const Icon(Icons.cancel),
                   label: const Text('Annuler'),
                 ),
-              ] else if (reservation.status == Status.confirmed) ...[
-                // Vérification du temps : est-ce que simulatedTime est AVANT la réservation ?
-                if (simulatedTime.isBefore(reservation.dateTime)) ...[
+              ] else if (_reservation.status == Status.confirmed) ...[
+                // Vérification du temps : est-ce que referenceTime est AVANT la réservation ?
+                if (referenceTime.isBefore(_reservation.dateTime)) ...[
                   ElevatedButton.icon(
                     onPressed: null,
                     // null désactive visuellement le bouton (le grise)
@@ -347,7 +381,6 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                   ElevatedButton.icon(
                     onPressed: () => _handleStatusAction(
                       context,
-                      ref,
                       'completed',
                       'Terminer la réservation',
                       'Marquer cette réservation comme terminée ?',
@@ -360,7 +393,6 @@ class ReservationDetailsManagerPage extends ConsumerWidget {
                 OutlinedButton.icon(
                   onPressed: () => _handleStatusAction(
                     context,
-                    ref,
                     'cancelled',
                     'Annuler la réservation',
                     'Êtes-vous sûr de vouloir annuler cette réservation ?',

@@ -65,6 +65,26 @@ class ManagerReservation {
     );
   }
 
+  ManagerReservation copyWith({
+    Status? status,
+    List<AssignedTable>? assignedTables,
+  }) {
+    return ManagerReservation(
+      id: id,
+      restaurantId: restaurantId,
+      clientName: clientName,
+      clientEmail: clientEmail,
+      clientPhone: clientPhone,
+      restaurantName: restaurantName,
+      dateTime: dateTime,
+      numberOfGuests: numberOfGuests,
+      status: status ?? this.status,
+      specialRequests: specialRequests,
+      assignedTables: assignedTables ?? this.assignedTables,
+    );
+  }
+
+
   static Future<List<ManagerReservation>> getForRestaurant(int restaurantId) async {
     final response = await ApiClient.post(
       'get_manager_restaurant_reservations',
