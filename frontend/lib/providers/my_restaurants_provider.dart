@@ -2,23 +2,23 @@ import 'dart:convert';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/services/api_client.dart';
 import '../core/tools/abstract_async_notifier.dart';
-import '../models/restaurant.dart';
+import '../models/restaurant_detail.dart';
 
-final myRestaurantsProvider = AsyncNotifierProvider.autoDispose<MyRestaurantsNotifier, List<Restaurant>>(
+final myRestaurantsProvider = AsyncNotifierProvider.autoDispose<MyRestaurantsNotifier, List<RestaurantDetail>>(
       () => MyRestaurantsNotifier(),
 );
 
-class MyRestaurantsNotifier extends AbstractAsyncNotifier<List<Restaurant>> {
+class MyRestaurantsNotifier extends AbstractAsyncNotifier<List<RestaurantDetail>> {
   @override
-  Future<List<Restaurant>> build() async {
+  Future<List<RestaurantDetail>> build() async {
     return _fetchRestaurants();
   }
 
-  Future<List<Restaurant>> _fetchRestaurants() async {
+  Future<List<RestaurantDetail>> _fetchRestaurants() async {
     final response = await ApiClient.get('get_my_restaurants');
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Restaurant.fromJson(json)).toList();
+      return data.map((json) => RestaurantDetail.fromJson(json)).toList();
     }
     throw Exception('Erreur chargement restaurants: ${response.statusCode}');
   }
