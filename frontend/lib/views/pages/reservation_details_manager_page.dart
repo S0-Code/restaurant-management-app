@@ -75,14 +75,19 @@ class _ReservationDetailsManagerPageState extends ConsumerState<ReservationDetai
 
         // 3. Afficher le feedback sans quitter la page
         if (context.mounted) {
-          final message = newStatus == 'cancelled'
-              ? 'Réservation annulée avec succès'
-              : 'Réservation mise à jour avec succès';
+          String message;
+          if (newStatus == 'cancelled') {
+            message = 'Réservation annulée avec succès';
+          } else if (newStatus == 'completed') {
+            message = 'Réservation marquée comme terminée';
+          } else {
+            message = 'Réservation mise à jour avec succès';
+          }
 
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
-                backgroundColor: newStatus == 'cancelled' ? Colors.grey[900] : Colors.green,
+                backgroundColor: newStatus == 'cancelled' ? Colors.grey[900] : Colors.blue,
               )
           );
         }
@@ -383,7 +388,7 @@ class _ReservationDetailsManagerPageState extends ConsumerState<ReservationDetai
                       context,
                       'completed',
                       'Terminer la réservation',
-                      'Marquer cette réservation comme terminée ?',
+                      'Voulez-vous marquer cette réservation comme terminée ?',
                     ),
                     icon: const Icon(Icons.check_circle),
                     label: const Text('Marquer comme terminée'),
