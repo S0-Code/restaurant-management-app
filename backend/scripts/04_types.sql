@@ -1,6 +1,9 @@
+drop type if exists client_reservation cascade;
+
 create type client_reservation as (
                                       id integer,
                                       client_id integer,
+                                      restaurant_id integer,
                                       restaurant_name varchar(256),
                                       restaurant_address varchar(512),
                                       city_name varchar(256),
@@ -31,4 +34,11 @@ create type service_info as (
     start_time time,
     end_time time
                             );
+
+
+create type reservation_slot_info as (
+                                         slot_datetime timestamp,
+                                         slot_time text,
+                                         has_enough_capacity boolean
+                                     );
 
