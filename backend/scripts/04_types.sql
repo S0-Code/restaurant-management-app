@@ -32,3 +32,10 @@ create type service_info as (
     end_time time
                             );
 
+
+create type reservation_slot_info as (
+                                         slot_datetime timestamp,
+                                         slot_time text,
+                                         has_enough_capacity boolean
+                                     );
+

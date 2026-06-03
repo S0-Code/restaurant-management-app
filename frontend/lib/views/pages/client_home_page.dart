@@ -221,7 +221,13 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         )
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () async {
+          await ref.read(clientStateProvider.notifier).prepareNewReservation();
+
+          if (!context.mounted) return;
+
+          Navigator.pushNamed(context, '/clientAddReservation');
+        },
         icon: const Icon(Icons.add),
         label: const Text('Nouvelle réservation'),
       ),

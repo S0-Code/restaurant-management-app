@@ -9,6 +9,7 @@ import 'package:prbd_2526_c05/views/pages/search_restaurants.dart';
 import 'package:prbd_2526_c05/views/pages/signup_page.dart';
 
 import '../views/pages/manager_home_page.dart';
+import 'package:prbd_2526_c05/views/pages/reservation_form_page.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -31,6 +32,7 @@ class MyApp extends ConsumerWidget {
         '/clientViewReservation': (context) => ClientViewReservation(),
         '/clientSearchRestaurants': (context) => SearchRestaurantsView(),
         '/clientViewRestaurant': (context) => RestaurantDetailPage(),
+        '/clientAddReservation': (context) => const ReservationFormPage(),
       },
     );
   }

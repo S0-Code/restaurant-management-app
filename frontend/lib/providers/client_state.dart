@@ -1,6 +1,7 @@
 import '../models/reservation.dart';
 import '../models/restaurant_detail.dart';
 import '../models/restaurant_service.dart';
+import '../models/reservation_slot.dart';
 
 class ClientState {
   final List<Reservation> reservations;
@@ -13,6 +14,13 @@ class ClientState {
   final bool hasTooManyRestaurantResults;
   final List<RestaurantService> currentRestaurantServices;
 
+  final DateTime? newReservationDate;
+  final ReservationSlot? selectedReservationSlot;
+  final int newReservationGuests;
+  final String newReservationSpecialRequests;
+  final List<ReservationSlot> reservationSlots;
+  final bool isLoadingReservationSlots;
+
   ClientState({
     required this.reservations,
     this.reservationsFilter = ReservationsFilter.pending,
@@ -22,6 +30,12 @@ class ClientState {
     this.currentRestaurant,
     this.hasTooManyRestaurantResults = false,
     this.currentRestaurantServices = const [],
+    this.newReservationDate,
+    this.selectedReservationSlot,
+    this.newReservationGuests = 2,
+    this.newReservationSpecialRequests = '',
+    this.reservationSlots = const [],
+    this.isLoadingReservationSlots = false,
   });
 
   List<Reservation> get filteredReservations {
@@ -43,6 +57,12 @@ class ClientState {
     RestaurantDetail? currentRestaurant,
     bool? hasTooManyRestaurantResults,
     List<RestaurantService>? currentRestaurantServices,
+    DateTime? newReservationDate,
+    ReservationSlot? selectedReservationSlot,
+    int? newReservationGuests,
+    String? newReservationSpecialRequests,
+    List<ReservationSlot>? reservationSlots,
+    bool? isLoadingReservationSlots,
   }) {
     return ClientState(
       reservations: reservations ?? this.reservations,
@@ -55,6 +75,14 @@ class ClientState {
       hasTooManyRestaurantResults ?? this.hasTooManyRestaurantResults,
       currentRestaurantServices:
       currentRestaurantServices ?? this.currentRestaurantServices,
+      newReservationDate: newReservationDate ?? this.newReservationDate,
+      selectedReservationSlot: selectedReservationSlot ?? this.selectedReservationSlot,
+      newReservationGuests: newReservationGuests ?? this.newReservationGuests,
+      newReservationSpecialRequests:
+      newReservationSpecialRequests ?? this.newReservationSpecialRequests,
+      reservationSlots: reservationSlots ?? this.reservationSlots,
+      isLoadingReservationSlots:
+      isLoadingReservationSlots ?? this.isLoadingReservationSlots,
     );
   }
 

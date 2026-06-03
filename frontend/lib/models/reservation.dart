@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:intl/intl.dart';
+
 import '../core/services/api_client.dart';
+import 'reservation_slot.dart';
 
 class Reservation {
   final int? id;
@@ -68,6 +71,61 @@ class Reservation {
       ),
     );
   }
+
+
+  static Future<List<ReservationSlot>> getReservationSlots({
+    required int restaurantId,
+    required DateTime date,
+    required int numberOfGuests,
+  }) async {
+    final response = await ApiClient.post(
+      'get_client_reservation_slots',
+      body: json.encode({
+        'p_restaurant': restaurantId,
+        'p_date': DateFormat('yyyy-MM-dd').format(date),
+        'p_number_of_guests': numberOfGuests,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> body = json.decode(response.body);
+
+      return body
+          .map((json) => ReservationSlot.fromJson(json))
+          .toList();
+    }
+
+    throw Exception(
+      'Failed to get reservation slots : ${response.statusCode} ${response.body}',
+    );
+  }
+
+  static Future<Reservation> createReservation({
+    required int restaurantId,
+    required DateTime dateTime,
+    required int numberOfGuests,
+    String? specialRequests,
+  }) async {
+    final response = await ApiClient.post(
+      'create_client_reservation',
+      body: json.encode({
+        'p_restaurant': restaurantId,
+        'p_datetime': dateTime.toIso8601String(),
+        'p_number_of_guests': numberOfGuests,
+        'p_special_requests': specialRequests,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      return Reservation.fromJson(body);
+    }
+
+    throw Exception(
+      'Failed to create reservation : ${response.statusCode} ${response.body}',
+    );
+  }
+
 
 
 }
