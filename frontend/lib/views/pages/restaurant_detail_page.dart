@@ -218,8 +218,15 @@ class _RestaurantDetailPageState
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // prochaine étape : aller vers la création de réservation
+                  onPressed: () async {
+                    await ref.read(clientStateProvider.notifier).prepareNewReservation();
+
+                    if (!context.mounted) return;
+
+                    Navigator.pushNamed(
+                      context,
+                      '/clientAddReservation',
+                    );
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Réserver'),
