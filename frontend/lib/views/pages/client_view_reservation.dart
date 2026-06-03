@@ -215,10 +215,10 @@ class ClientViewReservation extends ConsumerWidget {
                           const Text('Statut: '),
                           Chip(
                             label: Text(
-                              reservation.status.name,
-                              style: TextStyle(fontSize: 12, color: Colors.white),
+                              _statusLabel(reservation.status),
+                              style: const TextStyle(fontSize: 12, color: Colors.white),
                             ),
-                            backgroundColor: const Color(0xFFFF9800),
+                            backgroundColor: _statusColor(reservation.status),
                             padding: EdgeInsets.zero,
                           ),
                         ],
@@ -262,7 +262,61 @@ class ClientViewReservation extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: canCancel ? () {} : null,
+                      onPressed: canCancel
+                          ? () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) {
+                            return AlertDialog(
+                              title: const Text('Annuler la réservation'),
+                              content: const Text(
+                                'Êtes-vous sûr de vouloir annuler cette réservation ?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext, false);
+                                  },
+                                  child: const Text('Non'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext, true);
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Oui'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed != true) return;
+
+                        try {
+                          await ref.read(clientStateProvider.notifier).cancelReservation();
+
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Réservation annulée avec succès'),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                          : null,
                       icon: const Icon(Icons.cancel),
                       label: const Text('Annuler'),
                     ),
@@ -276,5 +330,30 @@ class ClientViewReservation extends ConsumerWidget {
     );
   }
 
+  Color _statusColor(Status status) {
+    switch (status) {
+      case Status.pending:
+        return Colors.orange;
+      case Status.confirmed:
+        return Colors.green;
+      case Status.cancelled:
+        return Colors.red;
+      case Status.completed:
+        return Colors.blue;
+    }
+  }
+
+  String _statusLabel(Status status) {
+    switch (status) {
+      case Status.pending:
+        return 'En attente';
+      case Status.confirmed:
+        return 'Confirmée';
+      case Status.cancelled:
+        return 'Annulée';
+      case Status.completed:
+        return 'Terminée';
+    }
+  }
 
 }

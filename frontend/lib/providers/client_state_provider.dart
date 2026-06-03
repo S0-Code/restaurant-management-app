@@ -345,6 +345,38 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
     );
   }
 
+  Future<void> cancelReservation() async {
+    final currentState = state.value;
+    final reservation = currentState?.currentReservation;
+
+    if (
+    currentState == null ||
+        reservation == null ||
+        reservation.id == null
+    ) {
+      return;
+    }
+
+    final cancelledReservation = await Reservation.cancelReservation(
+      reservationId: reservation.id!,
+    );
+
+    final updatedReservations = currentState.reservations.map((reservation) {
+      if (reservation.id == cancelledReservation.id) {
+        return cancelledReservation;
+      }
+
+      return reservation;
+    }).toList();
+
+    state = AsyncData(
+      currentState.copyWith(
+        reservations: updatedReservations,
+        currentReservation: cancelledReservation,
+      ),
+    );
+  }
+
 
   @override
   Future<void> refresh() async {
