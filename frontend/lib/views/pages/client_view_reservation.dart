@@ -248,7 +248,13 @@ class ClientViewReservation extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: canModify ? () {} : null,
+                      onPressed: canModify ? () async {
+                        await ref.read(clientStateProvider.notifier).prepareEditReservation();
+
+                        if (!context.mounted) return;
+
+                        Navigator.pushNamed(context, '/clientEditReservation');
+                      } : null,
                       icon: const Icon(Icons.edit),
                       label: const Text('Modifier'),
                     ),
