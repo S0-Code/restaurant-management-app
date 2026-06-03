@@ -21,6 +21,9 @@ class ClientState {
   final List<ReservationSlot> reservationSlots;
   final bool isLoadingReservationSlots;
 
+  final bool isEditingReservation;
+  final int? editedReservationId;
+
   ClientState({
     required this.reservations,
     this.reservationsFilter = ReservationsFilter.pending,
@@ -36,6 +39,8 @@ class ClientState {
     this.newReservationSpecialRequests = '',
     this.reservationSlots = const [],
     this.isLoadingReservationSlots = false,
+    this.isEditingReservation = false,
+    this.editedReservationId,
   });
 
   List<Reservation> get filteredReservations {
@@ -63,6 +68,8 @@ class ClientState {
     String? newReservationSpecialRequests,
     List<ReservationSlot>? reservationSlots,
     bool? isLoadingReservationSlots,
+    bool? isEditingReservation,
+    int? editedReservationId,
   }) {
     return ClientState(
       reservations: reservations ?? this.reservations,
@@ -83,6 +90,8 @@ class ClientState {
       reservationSlots: reservationSlots ?? this.reservationSlots,
       isLoadingReservationSlots:
       isLoadingReservationSlots ?? this.isLoadingReservationSlots,
+      isEditingReservation: isEditingReservation ?? this.isEditingReservation,
+      editedReservationId: editedReservationId ?? this.editedReservationId,
     );
   }
 

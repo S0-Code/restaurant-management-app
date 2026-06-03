@@ -11,6 +11,7 @@ begin
         select
             r.id,
             r.client,
+            r.restaurant,
             rest.name,
             rest.address,
             rest.city,
@@ -37,16 +38,30 @@ notify pgrst, 'reload schema';
 
 
 drop function if exists get_client_reservation_slots(integer, date, integer);
+drop function if exists get_client_reservation_slots(integer, date, integer, integer);
 
 create or replace function get_client_reservation_slots(
     p_restaurant integer,
     p_date date,
-    p_number_of_guests integer
+    p_number_of_guests integer,
+    p_ignored_reservation integer default null
 )
     returns setof reservation_slot_info as
 $$
 begin
     perform auth.check_logged();
+
+    if p_ignored_reservation is not null
+        and not exists (
+            select 1
+            from reservations r
+            where r.id = p_ignored_reservation
+              and r.client = auth.id()
+              and r.restaurant = p_restaurant
+        )
+    then
+        raise exception 'La réservation à ignorer est invalide.';
+    end if;
 
     return query
         with restaurant_info as (
@@ -84,6 +99,7 @@ begin
                        and r.restaurant = p_restaurant
                        and r.datetime::date = p_date
                        and r.status in ('pending', 'confirmed', 'completed')
+                       and (p_ignored_reservation is null or r.id <> p_ignored_reservation)
                        and sl.slot_time >= s.start_time
                        and sl.slot_time < s.end_time
                  )
@@ -107,6 +123,7 @@ begin
                     where rt."table" = t.id
                       and r.status in ('confirmed', 'completed')
                       and r.datetime::date = p_date
+                      and (p_ignored_reservation is null or r.id <> p_ignored_reservation)
                       and sl.slot_time >= s.start_time
                       and sl.slot_time < s.end_time
                 )
@@ -116,7 +133,7 @@ begin
 end;
 $$ language plpgsql security definer;
 
-grant execute on function get_client_reservation_slots(integer, date, integer) to client;
+grant execute on function get_client_reservation_slots(integer, date, integer, integer) to client;
 
 notify pgrst, 'reload schema';
 
@@ -161,6 +178,7 @@ begin
     select
         r.id,
         r.client,
+        r.restaurant,
         rest.name,
         rest.address,
         rest.city,
@@ -183,3 +201,76 @@ grant execute on function create_client_reservation(integer, timestamp, integer,
 
 notify pgrst, 'reload schema';
 
+
+
+
+
+
+drop function if exists update_client_reservation(integer, timestamp, integer, text);
+
+create or replace function update_client_reservation(
+    p_reservation integer,
+    p_datetime timestamp,
+    p_number_of_guests integer,
+    p_special_requests text default null
+)
+    returns client_reservation as
+$$
+declare
+    v_old_reservation reservations%rowtype;
+    v_reservation client_reservation;
+begin
+    perform auth.check_logged();
+
+    select *
+    into v_old_reservation
+    from reservations r
+    where r.id = p_reservation
+      and r.client = auth.id()
+        for update;
+
+    if not found then
+        raise exception 'Réservation introuvable.';
+    end if;
+
+    if v_old_reservation.status::text not in ('pending', 'confirmed') then
+        raise exception 'Cette réservation ne peut plus être modifiée.';
+    end if;
+
+    if v_old_reservation.datetime <= get_current_time() then
+        raise exception 'Une réservation passée ne peut plus être modifiée.';
+    end if;
+
+    update reservations
+    set datetime = p_datetime,
+        number_of_guests = p_number_of_guests,
+        special_requests = nullif(trim(p_special_requests), ''),
+        status = 'pending'
+    where id = p_reservation
+      and client = auth.id();
+
+    select
+        r.id,
+        r.client,
+        r.restaurant,
+        rest.name,
+        rest.address,
+        rest.city,
+        rest.phone,
+        r.datetime,
+        r.number_of_guests,
+        r.status,
+        r.special_requests
+    into v_reservation
+    from reservations r
+             join restaurants rest on rest.id = r.restaurant
+    where r.id = p_reservation
+      and r.client = auth.id();
+
+    return v_reservation;
+end;
+$$ language plpgsql security definer;
+
+grant execute on function update_client_reservation(integer, timestamp, integer, text) to client;
+
+notify pgrst, 'reload schema';

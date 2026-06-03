@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/reservation.dart';
 import '../../models/reservation_slot.dart';
 import '../../providers/client_state.dart';
 import '../../providers/client_state_provider.dart';
@@ -17,9 +18,14 @@ class ReservationFormPage extends ConsumerWidget {
     final asyncClientState = ref.watch(clientStateProvider);
     final clientStateNotifier = ref.read(clientStateProvider.notifier);
 
+    final clientState = asyncClientState.value;
+    final isEditMode = clientState?.isEditingReservation ?? false;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nouvelle réservation'),
+        title: Text(
+          isEditMode ? 'Modifier la réservation' : 'Nouvelle réservation',
+        ),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         surfaceTintColor: Colors.transparent,
@@ -27,7 +33,7 @@ class ReservationFormPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Rafraîchir les données',
+            tooltip: 'Rafraîchir les créneaux',
             onPressed: () {
               clientStateNotifier.loadReservationSlots();
             },
@@ -39,7 +45,8 @@ class ReservationFormPage extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                DateFormat('EEEE dd/MM/yyyy HH:mm', 'fr_FR').format(referenceTime),
+                DateFormat('EEEE dd/MM/yyyy HH:mm', 'fr_FR')
+                    .format(referenceTime),
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.grey[400],
@@ -53,14 +60,18 @@ class ReservationFormPage extends ConsumerWidget {
       body: asyncClientState.when(
         data: (clientState) => _data(
           context,
+          ref,
           clientState,
           clientStateNotifier,
+          referenceTime,
           isLoading: false,
         ),
         loading: () => _data(
           context,
+          ref,
           asyncClientState.value ?? ClientState(reservations: []),
           clientStateNotifier,
+          referenceTime,
           isLoading: true,
         ),
         error: (error, stackTrace) => Center(
@@ -79,19 +90,31 @@ class ReservationFormPage extends ConsumerWidget {
 
   Widget _data(
       BuildContext context,
+      WidgetRef ref,
       ClientState clientState,
-      ClientStateNotifier clientStateNotifier, {
+      ClientStateNotifier clientStateNotifier,
+      DateTime referenceTime, {
         required bool isLoading,
       }) {
+    final theme = Theme.of(context);
+
+    final isEditMode = clientState.isEditingReservation;
     final restaurant = clientState.currentRestaurant;
+    final reservation = clientState.currentReservation;
+
     final selectedDate = clientState.newReservationDate;
     final selectedSlot = clientState.selectedReservationSlot;
     final slots = clientState.reservationSlots;
-    final theme = Theme.of(context);
 
-    if (restaurant == null) {
+    if (!isEditMode && restaurant == null) {
       return const Center(
         child: Text('Aucun restaurant sélectionné.'),
+      );
+    }
+
+    if (isEditMode && reservation == null) {
+      return const Center(
+        child: Text('Aucune réservation sélectionnée.'),
       );
     }
 
@@ -101,8 +124,11 @@ class ReservationFormPage extends ConsumerWidget {
       );
     }
 
-    final specialRequests =
-    clientState.newReservationSpecialRequests.trim();
+    final restaurantName = isEditMode
+        ? reservation!.restaurantName
+        : restaurant!.name;
+
+    final specialRequests = clientState.newReservationSpecialRequests.trim();
 
     final isSpecialRequestsValid =
         specialRequests.isEmpty || specialRequests.length >= 10;
@@ -110,7 +136,7 @@ class ReservationFormPage extends ConsumerWidget {
     final hasOverbookingWarning =
         selectedSlot != null && !selectedSlot.hasEnoughCapacity;
 
-    final canCreate =
+    final canSubmit =
         selectedSlot != null &&
             isSpecialRequestsValid &&
             !clientState.isLoadingReservationSlots &&
@@ -125,12 +151,22 @@ class ReservationFormPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  restaurant.name,
+                  restaurantName,
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
+                const SizedBox(height: 8),
+
+                if (isEditMode)
+                  Text(
+                    'Modification de votre réservation',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                    ),
+                  ),
 
                 const SizedBox(height: 32),
 
@@ -200,13 +236,29 @@ class ReservationFormPage extends ConsumerWidget {
                   ),
                 ],
 
+                if (isEditMode &&
+                    reservation != null &&
+                    reservation.status == Status.confirmed &&
+                    reservation.dateTime.isAfter(referenceTime)) ...[
+                  const SizedBox(height: 24),
+                  const _WarningBox(
+                    icon: Icons.warning_amber_rounded,
+                    title: 'Attention',
+                    message:
+                    'Cette réservation est confirmée. Si vous la modifiez, elle repassera en attente et les tables déjà attribuées seront libérées.',
+                  ),
+                ],
+
                 const SizedBox(height: 40),
 
-                TextField(
+                TextFormField(
+                  key: ValueKey(
+                    'special_requests_${isEditMode}_${reservation?.id}',
+                  ),
+                  initialValue: clientState.newReservationSpecialRequests,
                   minLines: 3,
                   maxLines: 5,
-                  onChanged:
-                  clientStateNotifier.setNewReservationSpecialRequests,
+                  onChanged: clientStateNotifier.setNewReservationSpecialRequests,
                   decoration: InputDecoration(
                     labelText: 'Demandes spéciales (optionnel)',
                     hintText: 'Allergies, préférences, chaise bébé...',
@@ -220,41 +272,24 @@ class ReservationFormPage extends ConsumerWidget {
                 const SizedBox(height: 40),
 
                 FilledButton.icon(
-                  onPressed: canCreate
+                  onPressed: canSubmit
                       ? () async {
-                    try {
-                      await clientStateNotifier.createReservation();
-
-                      if (!context.mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Réservation créée avec succès.',
-                          ),
-                        ),
-                      );
-
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/clientHome',
-                            (route) => false,
-                      );
-                    } catch (e) {
-                      if (!context.mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Erreur lors de la création : $e',
-                          ),
-                        ),
-                      );
-                    }
+                    await _submitReservation(
+                      context,
+                      clientState,
+                      clientStateNotifier,
+                      referenceTime,
+                    );
                   }
                       : null,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Créer la réservation'),
+                  icon: Icon(
+                    isEditMode ? Icons.save : Icons.add,
+                  ),
+                  label: Text(
+                    isEditMode
+                        ? 'Modifier la réservation'
+                        : 'Créer la réservation',
+                  ),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -273,6 +308,99 @@ class ReservationFormPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _submitReservation(
+      BuildContext context,
+      ClientState clientState,
+      ClientStateNotifier clientStateNotifier,
+      DateTime referenceTime,
+      ) async {
+    final isEditMode = clientState.isEditingReservation;
+    final reservation = clientState.currentReservation;
+
+    try {
+      if (isEditMode) {
+        if (reservation == null) return;
+
+        final mustConfirm =
+            reservation.status == Status.confirmed &&
+                reservation.dateTime.isAfter(referenceTime);
+
+        if (mustConfirm) {
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Modifier la réservation ?'),
+              content: const Text(
+                'Cette réservation est déjà confirmée.\n\n'
+                    'Si vous la modifiez, elle repassera en attente et les tables attribuées seront libérées.\n\n'
+                    'Voulez-vous continuer ?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+                  child: const Text('Non'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text('Oui, modifier'),
+                ),
+              ],
+            ),
+          );
+
+          if (confirmed != true) return;
+        }
+
+        await clientStateNotifier.updateReservation();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Réservation modifiée avec succès.'),
+          ),
+        );
+
+        Navigator.pushReplacementNamed(
+          context,
+          '/clientViewReservation',
+        );
+      } else {
+        await clientStateNotifier.createReservation();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Réservation créée avec succès.'),
+          ),
+        );
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/clientHome',
+              (route) => false,
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditMode
+                ? 'Erreur lors de la modification : $e'
+                : 'Erreur lors de la création : $e',
+          ),
+        ),
+      );
+    }
   }
 }
 
