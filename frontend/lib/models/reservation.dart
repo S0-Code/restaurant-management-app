@@ -166,6 +166,27 @@ class Reservation {
   }
 
 
+  static Future<Reservation> cancelReservation({
+    required int reservationId,
+  }) async {
+    final response = await ApiClient.post(
+      'cancel_client_reservation',
+      body: json.encode({
+        'p_reservation': reservationId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      return Reservation.fromJson(body);
+    }
+
+    throw Exception(
+      'Failed to cancel reservation : ${response.statusCode} ${response.body}',
+    );
+  }
+
+
 }
 enum Status {
   pending,
