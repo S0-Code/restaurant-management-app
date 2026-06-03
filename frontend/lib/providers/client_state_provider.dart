@@ -82,7 +82,7 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
 
     if (currentState == null || restaurant == null) return;
 
-    final services = await RestaurantService.getRestaurantServices(
+    final services = await RestaurantService.getPublicServices(
       restaurant.id,
     );
 
