@@ -1,0 +1,12 @@
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiY2xpZW50Iiwic3ViIjoibWFtaWNoZWxAZXBmYy5ldSIsIm5hbWUiOiJNYXJjIiwidXNlcl9pZCI6NCwiZXhwIjoxNzgwMzM1NDAwfQ.zbEYlFCxU07xzx8ctipyIZtx7rCQRD0WS-JIr-2MB0w
+
+###
+
+POST http://localhost:3000/rpc/search_client_restaurants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "p_search": "trat",
+  "p_limit": 10
+}
