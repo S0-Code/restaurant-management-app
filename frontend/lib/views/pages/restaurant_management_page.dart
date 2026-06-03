@@ -5,6 +5,7 @@ import 'package:prbd_2526_c05/providers/reference_time_provider.dart';
 
 import '../../models/restaurant_detail.dart';
 import '../../providers/manager_reservations_provider.dart';
+import 'restaurant_tables_page.dart';
 import '../widgets/data_error_widget.dart';
 
 
@@ -89,7 +90,7 @@ class _RestaurantManagementPageState extends ConsumerState<RestaurantManagementP
   Widget _buildBody() {
     if (_currentIndex == 0) return _buildReservationsTab();
     if (_currentIndex == 1) return const Center(child: Text("Services (à venir)"));
-    return const Center(child: Text("Tables (à venir)"));
+    return RestaurantTablesPage(restaurantId: widget.restaurant.id);
   }
 
   Widget _buildReservationsTab() {
