@@ -128,36 +128,89 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
         newReservationSpecialRequests: '',
         reservationSlots: const [],
         isLoadingReservationSlots: true,
+        isEditingReservation: false,
+        editedReservationId: null,
       ),
     );
 
     await loadReservationSlots();
   }
 
-  Future<void> loadReservationSlots() async {
+
+  Future<void> prepareEditReservation() async {
     final currentState = state.value;
-    final restaurant = currentState?.currentRestaurant;
+    final reservation = currentState?.currentReservation;
+
+    if (currentState == null || reservation == null || reservation.id == null) return;
+
+    final initialDate = DateTime(
+      reservation.dateTime.year,
+      reservation.dateTime.month,
+      reservation.dateTime.day,
+    );
+
+    state = AsyncData(
+      currentState.copyWith(
+        newReservationDate: initialDate,
+        selectedReservationSlot: null,
+        newReservationGuests: reservation.numberOfGuests,
+        newReservationSpecialRequests: reservation.specialRequests ?? '',
+        reservationSlots: const [],
+        isLoadingReservationSlots: true,
+        isEditingReservation: true,
+        editedReservationId: reservation.id,
+      ),
+    );
+
+    await loadReservationSlots(preferredDateTime: reservation.dateTime);
+  }
+
+  Future<void> loadReservationSlots({DateTime? preferredDateTime}) async {
+    final currentState = state.value;
     final date = currentState?.newReservationDate;
 
-    if (currentState == null || restaurant == null || date == null) return;
+    if (currentState == null || date == null) return;
+
+    final restaurantId = currentState.isEditingReservation
+        ? currentState.currentReservation?.restaurantId
+        : currentState.currentRestaurant?.id;
+
+    if (restaurantId == null) return;
 
     state = AsyncData(
       currentState.copyWith(
         isLoadingReservationSlots: true,
         reservationSlots: const [],
+        selectedReservationSlot: null,
       ),
     );
 
     final slots = await Reservation.getReservationSlots(
-      restaurantId: restaurant.id,
+      restaurantId: restaurantId,
       date: date,
       numberOfGuests: currentState.newReservationGuests,
+      ignoredReservationId: currentState.isEditingReservation
+          ? currentState.editedReservationId
+          : null,
     );
+
+    ReservationSlot? selectedSlot;
+
+    if (preferredDateTime != null) {
+      for (final slot in slots) {
+        if (slot.slotDateTime == preferredDateTime) {
+          selectedSlot = slot;
+          break;
+        }
+      }
+    }
+
+    selectedSlot ??= slots.isNotEmpty ? slots.first : null;
 
     state = AsyncData(
       state.value!.copyWith(
         reservationSlots: slots,
-        selectedReservationSlot: slots.isNotEmpty ? slots.first : null,
+        selectedReservationSlot: selectedSlot,
         isLoadingReservationSlots: false,
       ),
     );
@@ -247,6 +300,46 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
           newReservation,
           ...currentState.reservations,
         ],
+        reservationsFilter: ReservationsFilter.pending,
+      ),
+    );
+  }
+
+
+  Future<void> updateReservation() async {
+    final currentState = state.value;
+    final reservation = currentState?.currentReservation;
+    final slot = currentState?.selectedReservationSlot;
+
+    if (
+    currentState == null ||
+        reservation == null ||
+        reservation.id == null ||
+        slot == null
+    ) {
+      return;
+    }
+
+    final updatedReservation = await Reservation.updateReservation(
+      reservationId: reservation.id!,
+      dateTime: slot.slotDateTime,
+      numberOfGuests: currentState.newReservationGuests,
+      specialRequests: currentState.newReservationSpecialRequests,
+    );
+
+    final updatedReservations = currentState.reservations.map((reservation) {
+      if (reservation.id == updatedReservation.id) {
+        return updatedReservation;
+      }
+
+      return reservation;
+    }).toList();
+
+    state = AsyncData(
+      currentState.copyWith(
+        reservations: updatedReservations,
+        currentReservation: updatedReservation,
+        isEditingReservation: false,
         reservationsFilter: ReservationsFilter.pending,
       ),
     );

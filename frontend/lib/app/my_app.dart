@@ -33,6 +33,7 @@ class MyApp extends ConsumerWidget {
         '/clientSearchRestaurants': (context) => SearchRestaurantsView(),
         '/clientViewRestaurant': (context) => RestaurantDetailPage(),
         '/clientAddReservation': (context) => const ReservationFormPage(),
+        '/clientEditReservation': (context) => const ReservationFormPage(),
       },
     );
   }

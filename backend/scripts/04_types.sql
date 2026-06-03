@@ -1,6 +1,9 @@
+drop type if exists client_reservation cascade;
+
 create type client_reservation as (
                                       id integer,
                                       client_id integer,
+                                      restaurant_id integer,
                                       restaurant_name varchar(256),
                                       restaurant_address varchar(512),
                                       city_name varchar(256),
