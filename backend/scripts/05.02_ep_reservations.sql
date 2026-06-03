@@ -274,3 +274,71 @@ $$ language plpgsql security definer;
 grant execute on function update_client_reservation(integer, timestamp, integer, text) to client;
 
 notify pgrst, 'reload schema';
+
+
+
+
+
+
+drop function if exists cancel_client_reservation(integer);
+
+create or replace function cancel_client_reservation(
+    p_reservation integer
+)
+    returns client_reservation as
+$$
+declare
+    v_old_reservation reservations%rowtype;
+    v_reservation client_reservation;
+begin
+    perform auth.check_logged();
+
+    select *
+    into v_old_reservation
+    from reservations r
+    where r.id = p_reservation
+      and r.client = auth.id()
+        for update;
+
+    if not found then
+        raise exception 'Réservation introuvable.';
+    end if;
+
+    if v_old_reservation.status::text not in ('pending', 'confirmed') then
+        raise exception 'Cette réservation ne peut plus être annulée.';
+    end if;
+
+    if v_old_reservation.datetime <= get_current_time() then
+        raise exception 'Une réservation passée ne peut plus être annulée.';
+    end if;
+
+    update reservations
+    set status = 'cancelled'
+    where id = p_reservation
+      and client = auth.id();
+
+    select
+        r.id,
+        r.client,
+        r.restaurant,
+        rest.name,
+        rest.address,
+        rest.city,
+        rest.phone,
+        r.datetime,
+        r.number_of_guests,
+        r.status,
+        r.special_requests
+    into v_reservation
+    from reservations r
+             join restaurants rest on rest.id = r.restaurant
+    where r.id = p_reservation
+      and r.client = auth.id();
+
+    return v_reservation;
+end;
+$$ language plpgsql security definer;
+
+grant execute on function cancel_client_reservation(integer) to client;
+
+notify pgrst, 'reload schema';

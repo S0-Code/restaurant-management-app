@@ -17,9 +17,14 @@ class Security {
     return token;
   }
   static Future<void> resetDatabase() async {
-    await ApiClient.post(
-      'reset_database'
+    final response = await ApiClient.post(
+      'reset_database',
+      anonymous: true,
     );
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      throw Exception('Failed to reset database');
+    }
   }
 
   // VERIFIER L'EMAIL

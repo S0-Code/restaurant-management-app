@@ -252,6 +252,7 @@ class _RestaurantServicesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Regrouper les services par jour
     final groupedServices = <int, List<RestaurantService>>{};
 
     for (final service in services) {
@@ -259,64 +260,75 @@ class _RestaurantServicesView extends StatelessWidget {
       groupedServices[service.dayOfWeek]!.add(service);
     }
 
-    return Column(
-      children: List.generate(7, (index) {
-        final dayOfWeek = index + 1;
-        final dayServices = groupedServices[dayOfWeek] ?? [];
+    // 2. Extraire uniquement les jours qui ont au moins un service
+    final activeDays = groupedServices.keys.toList()..sort();
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
+    // 3. Couper la liste en deux pour faire deux colonnes équilibrées
+    final half = (activeDays.length / 2).ceil();
+    final leftDays = activeDays.sublist(0, half);
+    final rightDays = activeDays.sublist(half);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Colonne de Gauche
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 90,
-                child: Text(
-                  _dayName(dayOfWeek),
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  dayServices.isEmpty
-                      ? 'Fermé'
-                      : dayServices
-                      .map(
-                        (service) =>
-                    '${service.formattedStartTime} - ${service.formattedEndTime}',
-                  )
-                      .join(', '),
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    color: dayServices.isEmpty ? Colors.grey : null,
-                  ),
-                ),
-              ),
-            ],
+            children: leftDays.map((day) => _buildDayRow(day, groupedServices[day]!)).toList(),
           ),
-        );
-      }),
+        ),
+        const SizedBox(width: 8),
+        // Colonne de Droite
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: rightDays.map((day) => _buildDayRow(day, groupedServices[day]!)).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Sous-widget pour construire la ligne d'un jour spécifique
+  Widget _buildDayRow(int dayOfWeek, List<RestaurantService> dayServices) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Le nom du jour
+          SizedBox(
+            width: 75,
+            child: Text(
+              _dayName(dayOfWeek),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          // Les horaires empilés
+          Expanded(
+            child: Text(
+              dayServices
+                  .map((service) => '${service.formattedStartTime} - ${service.formattedEndTime}')
+                  .join(',\n'),
+              style: TextStyle(color: Colors.grey[800], height: 1.4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   String _dayName(int dayOfWeek) {
     switch (dayOfWeek) {
-      case 1:
-        return 'Lundi';
-      case 2:
-        return 'Mardi';
-      case 3:
-        return 'Mercredi';
-      case 4:
-        return 'Jeudi';
-      case 5:
-        return 'Vendredi';
-      case 6:
-        return 'Samedi';
-      case 7:
-        return 'Dimanche';
-      default:
-        return '';
+      case 1: return 'Lundi';
+      case 2: return 'Mardi';
+      case 3: return 'Mercredi';
+      case 4: return 'Jeudi';
+      case 5: return 'Vendredi';
+      case 6: return 'Samedi';
+      case 7: return 'Dimanche';
+      default: return '';
     }
   }
 }

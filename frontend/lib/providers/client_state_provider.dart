@@ -82,7 +82,7 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
 
     if (currentState == null || restaurant == null) return;
 
-    final services = await RestaurantService.getRestaurantServices(
+    final services = await RestaurantService.getPublicServices(
       restaurant.id,
     );
 
@@ -341,6 +341,38 @@ class ClientStateNotifier extends AbstractAsyncNotifier<ClientState> {
         currentReservation: updatedReservation,
         isEditingReservation: false,
         reservationsFilter: ReservationsFilter.pending,
+      ),
+    );
+  }
+
+  Future<void> cancelReservation() async {
+    final currentState = state.value;
+    final reservation = currentState?.currentReservation;
+
+    if (
+    currentState == null ||
+        reservation == null ||
+        reservation.id == null
+    ) {
+      return;
+    }
+
+    final cancelledReservation = await Reservation.cancelReservation(
+      reservationId: reservation.id!,
+    );
+
+    final updatedReservations = currentState.reservations.map((reservation) {
+      if (reservation.id == cancelledReservation.id) {
+        return cancelledReservation;
+      }
+
+      return reservation;
+    }).toList();
+
+    state = AsyncData(
+      currentState.copyWith(
+        reservations: updatedReservations,
+        currentReservation: cancelledReservation,
       ),
     );
   }

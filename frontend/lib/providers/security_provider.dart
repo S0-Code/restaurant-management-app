@@ -17,16 +17,17 @@ class SecurityNotifier extends AsyncNotifier<String?> {
     return state.value;
   }
   Future<void> resetDatabase() async {
+    final previousState = state;
+
     state = const AsyncLoading();
     await Future.delayed(const Duration(seconds: 1));
+
     try {
-      final previousState = state;
       await Security.resetDatabase();
       state = previousState;
     } catch (e) {
-      state = AsyncError(
-          "Something went wrong!\nPlease try again later.",
-          StackTrace.current);
+      state = previousState;
+      rethrow;
     }
   }
 
